@@ -1,8 +1,6 @@
--- Keymaps are automatically loaded on the VeryLazy event
--- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
--- Add any additional keymaps here
--- VERSION 2.0
+-- Author: Cristopher Moreno
 local map = vim.keymap.set
+
 -- 1. SEARCHING
 map("n", "<leader><leader>", function()
   require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })
