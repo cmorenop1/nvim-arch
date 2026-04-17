@@ -111,17 +111,17 @@ map("n", "<leader>r", function()
   vim.cmd("normal! zz")
 end, { desc = "Replace word" })
 
-map("v", "<leader>r", function()
-  local win = 0
-  local cursor = vim.api.nvim_win_get_cursor(win)
-  vim.cmd('normal! "hy')
-  local selected_text = vim.fn.getreg("h")
-  local cmd = ":%s/" .. vim.fn.escape(selected_text, "/\\") .. "//g"
-  local keys = vim.api.nvim_replace_termcodes(cmd .. "<Left><Left>", true, false, true)
-  vim.api.nvim_feedkeys(keys, "n", false)
-  vim.api.nvim_win_set_cursor(win, cursor)
-  vim.cmd("normal! zz")
-end, { desc = "Replace Visually" })
+-- map("v", "<leader>r", function()
+--   local win = 0
+--   local cursor = vim.api.nvim_win_get_cursor(win)
+--   vim.cmd('normal! "hy')
+--   local selected_text = vim.fn.getreg("h")
+--   local cmd = ":%s/" .. vim.fn.escape(selected_text, "/\\") .. "//g"
+--   local keys = vim.api.nvim_replace_termcodes(cmd .. "<Left><Left>", true, false, true)
+--   vim.api.nvim_feedkeys(keys, "n", false)
+--   vim.api.nvim_win_set_cursor(win, cursor)
+--   vim.cmd("normal! zz")
+-- end, { desc = "Replace Visually" })
 
 map("n", "<leader>p", function()
   local dir = vim.fn.expand("%:.")
@@ -136,9 +136,9 @@ map("n", "<Tab>.", function()
   vim.cmd("edit $HOME/.config/nvim/lua/config/keymaps.lua")
   vim.notify("Edit Keymaps!")
 end, {
-  desc = "Edit keymaps file",
-  noremap = true,
-})
+    desc = "Edit keymaps file",
+    noremap = true,
+  })
 
 map({ "n", "i" }, "<F1>", function()
   local var = vim.fn.input("(Python) Print: ")
@@ -181,7 +181,7 @@ vim.keymap.set({ "n", "i" }, "<F7>", function()
     return
   end
   local command =
-    string.format('split | term python3 -m pip install yt-dlp; yt-dlp --netrc -x --audio-format mp3 "%s" ; exit', link)
+  string.format('split | term python3 -m pip install yt-dlp; yt-dlp --netrc -x --audio-format mp3 "%s" ; exit', link)
   vim.cmd(command)
 end)
 
@@ -210,6 +210,96 @@ end, { noremap = true, silent = true })
 
 map({ "n", "t" }, "<C-Up>", [[<C-\><C-n><C-w>k]], { desc = "Move Up", remap = false })
 map({ "n", "t" }, "<C-Down>", [[<C-\><C-n><C-w>j]], { desc = "Move Down", remap = false })
+
+-- LLM TOOL
+map("v", "<Tab>M", function()
+  -- 1. Get the selected text
+  vim.cmd('noau normal! "vy')
+  local selected_text = vim.fn.getreg("v")
+
+  -- 2. Ask the human for their instruction
+  local user_prompt = vim.fn.input("Prompt: ")
+  if user_prompt == "" then
+    user_prompt = "Please analyze this:"
+  end
+
+  local full_payload = user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
+
+  local script_path = vim.fn.expand("$HOME/scripts/llm-tool.sh")
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+
+  -- Calculate window size
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local placeholder = "thinking..."
+  local pad_top = math.floor(height / 2)
+  local pad_left = math.floor((width - #placeholder) / 2)
+  local lines = {}
+  for _ = 1, pad_top do table.insert(lines, "") end
+  table.insert(lines, string.rep(" ", pad_left) .. placeholder)
+
+  -- Open the window
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+    footer = " [q] quit ",
+    footer_pos = "center",
+  })
+
+  -- TRUE MODAL EFFECT: Dims the background windows
+  vim.api.nvim_win_set_option(win, "winhighlight", "Normal:Normal,NormalNC:MyModalDim,EndOfBuffer:MyModalDim")
+  vim.wo.wrap = true
+
+  -- 4. SAVE AND QUIT LISTENER (The 'q' key)
+  vim.keymap.set("n", "q", function()
+    local content_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local content = table.concat(content_lines, "\n")
+    local dir = vim.fn.expand("$HOME/conversations/")
+
+    if vim.fn.isdirectory(dir) == 0 then vim.fn.mkdir(dir, "p") end
+
+    local timestamp = os.date("%Y%m%d_%H%M%S")
+    local filename = dir .. "conversation_" .. timestamp .. ".txt"
+
+    local file = io.open(filename, "w")
+    if file then
+      file:write(content)
+      file:close()
+      -- Use a simple print or notify
+      vim.notify("Saved: " .. filename, vim.log.levels.INFO)
+    end
+
+    -- Cleanup: Close window and wipe buffer
+    vim.api.nvim_win_close(win, true)
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end, { buffer = buf, silent = true })
+
+  -- 3. Execute the script
+  vim.fn.jobstart({ script_path, full_payload }, {
+    stdout_buffered = true,
+    on_stdout = function(_, data)
+      if data and #data > 0 and data[1] ~= "" then
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, data)
+      end
+    end,
+    on_stderr = function(_, data)
+      if data and #data > 1 then
+        vim.notify("Error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+      end
+    end,
+  })
+end, { desc = "LL[M] tool", silent = true })
+
 
 -- 8. DEAD KEYS
 local modes = { "n", "i", "v", "x", "s", "o", "t", "c" }
