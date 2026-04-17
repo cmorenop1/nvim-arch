@@ -103,7 +103,9 @@ map("n", "<leader>r", function()
   local word = vim.fn.expand("<cword>")
   local new_word = vim.fn.input("Replace '" .. word .. "' with: ")
   if new_word ~= "" then
+    local count = vim.fn.searchcount({ pattern = word, recompute = true }).total
     vim.cmd(string.format("%%s/%s/%s/g", word, new_word))
+    print(count .. " instances replaced")
   end
   vim.api.nvim_win_set_cursor(win, cursor)
   vim.cmd("normal! zz")

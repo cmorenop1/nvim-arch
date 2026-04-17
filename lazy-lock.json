@@ -31,6 +31,7 @@
   "miasma.nvim": { "branch": "main", "commit": "56d9fbd5f9527a4bd13b4084847cf3e833d82f31" },
   "mini.ai": { "branch": "main", "commit": "4b0a6207341d895b6cfe9bcb1e4d3e8607bfe4f4" },
   "mini.animate": { "branch": "main", "commit": "72e04cf86ccbcd50efb53c2b87397386195bc3a7" },
+  "mini.hipatterns": { "branch": "main", "commit": "a3ffba45e4119917b254c372df82e79f7d8c4aad" },
   "mini.icons": { "branch": "main", "commit": "5b9076dae1bfbe47ba4a14bc8b967cde0ab5d77e" },
   "mini.move": { "branch": "main", "commit": "74d140143b1bb905c3d0aebcfc2f216fd237080e" },
   "mini.pairs": { "branch": "main", "commit": "b7fde3719340946feb75017ef9d75edebdeb0566" },
