@@ -5,7 +5,13 @@ return {
     local home = vim.loop.os_homedir() -- or vim.fn.expand("$HOME")
     require("telescope").setup({
       defaults = {
-        file_ignore_patterns = { "node_modules", ".git/", ".env/", ".venv/" },
+        file_ignore_patterns = {
+          "node_modules",
+          ".git/",
+          ".env/",
+          ".venv/",
+          ".ruff_cache/",
+        },
         layout_strategy = "flex",
       },
       pickers = {
