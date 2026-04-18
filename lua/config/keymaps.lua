@@ -16,6 +16,7 @@ map("n", "<Tab>y", "yiw", { noremap = true, silent = true, desc = "[y]ank" })
 map("n", "<Tab>c", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
 map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
 map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
+
 -- 3. MOVING AROUND
 map("n", "gg", "gg_", { noremap = true, silent = true })
 map("n", "G", "G_", { noremap = true, silent = true })
@@ -41,8 +42,8 @@ end, { noremap = true, silent = true, desc = "Format [s]election" })
 -- PAGE JUMPS
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
-map({ "n", "v" }, "<Tab>]", "<C-d>zz0", { noremap = true, silent = true })
-map({ "n", "v" }, "<Tab>[", "<C-u>zz0", { noremap = true, silent = true })
+map({ "n", "v" }, "<Tab>]", "<C-d>zz0", { noremap = true, silent = true, desc = "Go half page down" })
+map({ "n", "v" }, "<Tab>[", "<C-u>zz0", { noremap = true, silent = true, desc = "Go half page down" })
 
 -- WORD MOVES
 map({ "n", "v" }, "<C-Right>", "e", { noremap = true, silent = true })
@@ -68,9 +69,9 @@ for trigger, target in pairs(delimiters) do
 end
 
 -- 6. TAB RULES
-map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true })
-map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true })
-map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true })
+map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
+map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
+map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })
 
 map("n", "<Tab>f", function()
   local win = 0
@@ -109,17 +110,6 @@ map("n", "<leader>r", function()
   vim.cmd("normal! zz")
 end, { desc = "Replace word" })
 
--- map("v", "<leader>r", function()
---   local win = 0
---   local cursor = vim.api.nvim_win_get_cursor(win)
---   vim.cmd('normal! "hy')
---   local selected_text = vim.fn.getreg("h")
---   local cmd = ":%s/" .. vim.fn.escape(selected_text, "/\\") .. "//g"
---   local keys = vim.api.nvim_replace_termcodes(cmd .. "<Left><Left>", true, false, true)
---   vim.api.nvim_feedkeys(keys, "n", false)
---   vim.api.nvim_win_set_cursor(win, cursor)
---   vim.cmd("normal! zz")
--- end, { desc = "Replace Visually" })
 
 map("n", "<leader>p", function()
   local dir = vim.fn.expand("%:.")
@@ -210,7 +200,7 @@ map({ "n", "t" }, "<C-Up>", [[<C-\><C-n><C-w>k]], { desc = "Move Up", remap = fa
 map({ "n", "t" }, "<C-Down>", [[<C-\><C-n><C-w>j]], { desc = "Move Down", remap = false })
 
 -- LLM TOOL
-map("v", "<Tab>M", function()
+map("v", "<Tab>m", function()
   -- 1. Get the selected text
   vim.cmd('noau normal! "vy')
   local selected_text = vim.fn.getreg("v")
@@ -218,7 +208,8 @@ map("v", "<Tab>M", function()
   -- 2. Ask the human for their instruction
   local user_prompt = vim.fn.input("Prompt: ")
   if user_prompt == "" then
-    user_prompt = "Please analyze this:"
+    vim.notify("llm tool cancelled", vim.log.levels.WARN)
+    return
   end
 
   local full_payload = user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
@@ -296,7 +287,7 @@ map("v", "<Tab>M", function()
       end
     end,
   })
-end, { desc = "LL[M] tool", silent = true })
+end, { desc = "ll[m] tool", silent = true })
 
 
 -- 8. DEAD KEYS
