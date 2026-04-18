@@ -1,4 +1,5 @@
 -- Author: Cristopher Moreno
+
 local map = vim.keymap.set
 
 -- 1. SEARCHING
@@ -14,8 +15,7 @@ map("n", "dd", '"_dd', { noremap = true, silent = true, desc = "Delete line with
 map("n", "<Tab>y", "yiw", { noremap = true, silent = true, desc = "[y]ank" })
 map("n", "<Tab>c", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
 map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
-map({ "n", "t" }, "<Tab>p", 'viw"_dP', { noremap = true, silent = true, desc = "[p]aste inside Word" })
-
+map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
 -- 3. MOVING AROUND
 map("n", "gg", "gg_", { noremap = true, silent = true })
 map("n", "G", "G_", { noremap = true, silent = true })
