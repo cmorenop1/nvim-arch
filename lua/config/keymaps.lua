@@ -3,10 +3,29 @@
 local map = vim.keymap.set
 
 -- 1. SEARCHING
-map("n", "<leader><leader>", function()
-  require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })
-end, { desc = "Find Files" })
-map("n", "<leader>fg", require("telescope.builtin").live_grep, { desc = "Find Grep" })
+local function find_files_in_cwd()
+  local dir = vim.fn.expand('%:p:h')
+  if dir == '' or dir == '.' then
+    dir = vim.loop.cwd()
+  end
+  require('telescope.builtin').find_files({ cwd = dir })
+end
+
+local function live_grep_in_cwd()
+  local dir = vim.fn.expand('%:p:h')
+  if dir == '' or dir == '.' then
+    dir = vim.loop.cwd()
+  end
+  require('telescope.builtin').live_grep({ cwd = dir })
+end
+
+map('n', '<leader><leader>', find_files_in_cwd, { desc = 'Find Files in CWD' })
+map('n', '<leader>fg', live_grep_in_cwd, { desc = 'Find Files in CWD' })
+
+-- map("n", "<leader><leader>", function()
+--   require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })
+-- end, { desc = "Find Files" })
+-- map("n", "<leader>fg", require("telescope.builtin").live_grep, { desc = "Find Grep" })
 
 -- 2. DELETING & YANKING
 map("n", "D", '"_ld$', { desc = "[D]elete until EOL" })
