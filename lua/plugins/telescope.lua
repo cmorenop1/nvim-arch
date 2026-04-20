@@ -2,7 +2,22 @@ return {
   "nvim-telescope/telescope.nvim",
   dependencies = { "nvim-lua/plenary.nvim" },
   config = function()
-    local home = vim.loop.os_homedir() -- or vim.fn.expand("$HOME")
+    local home = vim.uv.os_homedir()
+
+    local function get_project_root()
+      local dir = vim.fn.getcwd()
+      local markers = { ".git" } -- TREE CEILING
+      while dir ~= home and dir ~= "/" do
+        for _, m in ipairs(markers) do
+          if vim.fn.isdirectory(dir .. "/" .. m) == 1 or vim.fn.filereadable(dir .. "/" .. m) == 1 then
+            return dir
+          end
+        end
+        dir = vim.fn.fnamemodify(dir, ":h")
+      end
+      return vim.fn.getcwd()
+    end
+
     require("telescope").setup({
       defaults = {
         file_ignore_patterns = {
@@ -19,7 +34,7 @@ return {
           hidden = true,
           no_ignore = true,
           no_ignore_parent = true,
-          cwd = home,
+          cwd = get_project_root(),
         },
       },
     })
