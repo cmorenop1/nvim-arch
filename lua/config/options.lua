@@ -5,3 +5,4 @@ vim.opt.relativenumber = true
 vim.g.minipairs_disable = true
 vim.o.autowriteall = true
 vim.g.autoformat = false
+vim.g.lazyvim_python_lsp = "ty"
