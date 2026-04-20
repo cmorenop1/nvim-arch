@@ -264,8 +264,12 @@ map("v", "<Tab>m", function()
     footer_pos = "center",
   })
 
-  -- TRUE MODAL EFFECT: Dims the background windows
-  vim.api.nvim_win_set_option(win, "winhighlight", "Normal:Normal,NormalNC:MyModalDim,EndOfBuffer:MyModalDim")
+  -- Enable line numbers in the floating window
+  vim.api.nvim_set_option_value("number",         true, { win = win })
+  vim.api.nvim_set_option_value("relativenumber", true, { win = win })
+  vim.api.nvim_set_option_value("numberwidth",    4,    { win = win })
+  vim.api.nvim_set_option_value("wrap",           true, { win = win })
+
   vim.wo.wrap = true
 
   -- 4. SAVE AND QUIT LISTENER (The 'q' key)
