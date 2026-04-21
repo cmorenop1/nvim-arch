@@ -22,10 +22,10 @@ end
 map('n', '<leader><leader>', find_files_in_cwd, { desc = 'Find Files in CWD' })
 map('n', '<leader>fg', live_grep_in_cwd, { desc = 'Find Files in CWD' })
 
--- map("n", "<leader><leader>", function()
---   require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })
--- end, { desc = "Find Files" })
--- map("n", "<leader>fg", require("telescope.builtin").live_grep, { desc = "Find Grep" })
+map('n', 'za', function()
+  vim.cmd('normal! za')
+  vim.notify('[za] Folding!!')
+end, { desc = 'Toggle Folding' })
 
 -- 2. DELETING & YANKING
 map("n", "D", '"_ld$', { desc = "[D]elete until EOL" })
@@ -162,35 +162,35 @@ map({ "n", "i" }, "<F1>", function()
   vim.api.nvim_buf_set_text(0, row - 1, 0, row - 1, 0, { line })
 end)
 
-map({ "n", "i" }, "<F2>", function()
-  local input = vim.fn.input("Calculator: ")
-  local solver = load("return " .. input)
-  if not solver then
-    vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
-    return
-  end
-  local ok, result = pcall(solver)
-  if ok and type(result) == "number" then
-    local result_value = " " .. tostring(result)
-    if vim.api.nvim_get_mode().mode == "i" then
-      vim.api.nvim_feedkeys(result_value, "n", false)
-    else
-      vim.api.nvim_put({ result_value }, "c", true, true)
-    end
-    return
-  end
-  vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
-end, { desc = "Calculate and insert math", silent = true })
+-- map({ "n", "i" }, "<F2>", function()
+--   local input = vim.fn.input("Calculator: ")
+--   local solver = load("return " .. input)
+--   if not solver then
+--     vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
+--     return
+--   end
+--   local ok, result = pcall(solver)
+--   if ok and type(result) == "number" then
+--     local result_value = " " .. tostring(result)
+--     if vim.api.nvim_get_mode().mode == "i" then
+--       vim.api.nvim_feedkeys(result_value, "n", false)
+--     else
+--       vim.api.nvim_put({ result_value }, "c", true, true)
+--     end
+--     return
+--   end
+--   vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
+-- end, { desc = "Calculate and insert math", silent = true })
 
-vim.keymap.set({ "n", "i" }, "<F7>", function()
-  local link = vim.fn.input("Link: ")
-  if link == "" then
-    return
-  end
-  local command =
-  string.format('split | term python3 -m pip install yt-dlp; yt-dlp --netrc -x --audio-format mp3 "%s" ; exit', link)
-  vim.cmd(command)
-end)
+-- vim.keymap.set({ "n", "i" }, "<F7>", function()
+--   local link = vim.fn.input("Link: ")
+--   if link == "" then
+--     return
+--   end
+--   local command =
+--   string.format('split | term python3 -m pip install yt-dlp; yt-dlp --netrc -x --audio-format mp3 "%s" ; exit', link)
+--   vim.cmd(command)
+-- end)
 
 -- TERMINAL
 map({ "n", "i", "t" }, "<F6>", "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true })
