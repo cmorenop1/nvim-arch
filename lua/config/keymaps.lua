@@ -231,7 +231,9 @@ map("v", "<Tab>m", function()
     return
   end
 
-  local full_payload = user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
+  -- Language constraint injected at the top of the payload
+  local system_prompt = "IMPORTANT: Your response must always be in English language.\n\n"
+  local full_payload = system_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
 
   local script_path = vim.fn.expand("$HOME/scripts/llm-tool.sh")
   local buf = vim.api.nvim_create_buf(false, true)
@@ -320,6 +322,7 @@ for _, mode in ipairs(modes) do
   map(mode, "<C-W><Down>", "<NOP>", { noremap = true, silent = true })
 end
 map({ "i", "n", "v", "c" }, "<Insert>", "<Nop>", { noremap = true, silent = true })
+map({"n", "v"}, ".", "<Nop>", { noremap = true, silent = true })
 map({ "n", "i", "v", "x", "o", "c", "t" }, "<C-/>", "<Nop>", { noremap = true, silent = true })
 map("n", "Q", "<Nop>", { noremap = true })
 map("n", "q", "<Nop>", { noremap = true })
