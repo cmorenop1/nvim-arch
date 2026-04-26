@@ -81,6 +81,21 @@ map("n", "o", "o<Esc>zz", { noremap = true, silent = true })
 map("n", "O", "O<Esc>zz", { noremap = true, silent = true })
 map("n", "<S-a>", "a", { noremap = true, silent = true })
 
+local append_chars = { ",", ";", ":", "=" }
+for _, char in ipairs(append_chars) do
+  map("v", "<Tab>a" .. char, function()
+    vim.api.nvim_feedkeys(
+      vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false
+    )
+    local start_line  = vim.fn.line("'<")
+    local finish_line = vim.fn.line("'>")
+    for lnum = start_line, finish_line do
+      local line = vim.fn.getline(lnum)
+      vim.fn.setline(lnum, line .. char)
+    end
+  end, { noremap = true, silent = true, desc = "Append [" .. char .. "] to block" })
+end
+
 -- 5. `'[{("SURROUND")}]'` WITH SYMBOLS
 local delimiters = { ["{"] = "}", ["("] = ")", ["["] = "]", ["q"] = '"', ["s"] = "'", ["b"] = "`" }
 for trigger, target in pairs(delimiters) do
