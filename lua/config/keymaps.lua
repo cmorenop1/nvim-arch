@@ -1,26 +1,29 @@
 -- Author: Cristopher Moreno
-
 local map = vim.keymap.set
+local home = vim.uv.os_homedir()
 
 -- 1. SEARCHING
-local function find_files_in_cwd()
-  local dir = vim.fn.expand('%:p:h')
-  if dir == '' or dir == '.' then
-    dir = vim.loop.cwd()
+local function get_project_root()
+  local dir = vim.fn.getcwd()
+  local markers = { ".git" } -- TREE CEILING
+  while dir ~= home and dir ~= "/" do
+    for _, m in ipairs(markers) do
+      if vim.fn.isdirectory(dir .. "/" .. m) == 1 or vim.fn.filereadable(dir .. "/" .. m) == 1 then
+        return dir
+      end
+    end
+    dir = vim.fn.fnamemodify(dir, ":h")
   end
-  require('telescope.builtin').find_files({ cwd = dir })
+  return vim.fn.getcwd()
 end
 
-local function live_grep_in_cwd()
-  local dir = vim.fn.expand('%:p:h')
-  if dir == '' or dir == '.' then
-    dir = vim.loop.cwd()
-  end
-  require('telescope.builtin').live_grep({ cwd = dir })
-end
+map('n', '<leader><leader>', function()
+  require('telescope.builtin').find_files({ cwd = get_project_root() })
+end, { desc = 'Find Files' })
 
-map('n', '<leader><leader>', find_files_in_cwd, { desc = 'Find Files in CWD' })
-map('n', '<leader>fg', live_grep_in_cwd, { desc = 'Find Files in CWD' })
+map('n', '<leader>fg', function()
+  require('telescope.builtin').live_grep({ cwd = get_project_root() })
+end, { desc = 'Find with GREP' })
 
 map('n', 'za', function()
   vim.cmd('normal! za')
