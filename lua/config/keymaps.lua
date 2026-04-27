@@ -29,44 +29,33 @@ map('n', '<Tab>ml', function()
   require('telescope.builtin').marks()
 end, { desc = 'List marks' })
 
+
 map('n', '<Tab>ma', function()
-  vim.ui.input({ prompt = 'Mark letter (A-Z only): ' }, function(letter)
-    if not letter or letter == '' then return end
-    letter = letter:sub(1, 1):upper() -- force uppercase, so 'a' becomes 'A'
-
-    if not letter:match('[A-Z]') then
-      vim.notify('Invalid mark: only A-Z global marks allowed', vim.log.levels.WARN)
-      return
-    end
-
-    vim.cmd('mark ' .. letter)
-    vim.notify('Global mark [' .. letter .. '] set', vim.log.levels.INFO)
-  end)
-end, { desc = 'Add Global Mark' })
-
-map('n', '<Tab>md', function()
   -- collect global marks (A-Z) only
   local marks = vim.fn.getmarklist()
+  local used = {}
   local lines = {}
+
   for _, m in ipairs(marks) do
     if m.mark:match("'[A-Z]") then
       local letter = m.mark:sub(2, 2)
+      used[letter] = true
       local file = m.file or '[no file]'
-      file = file:gsub(vim.env.HOME, '~') -- shorten home path
+      file = file:gsub(vim.env.HOME, '~')
       table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
     end
   end
 
-  if #lines == 0 then
-    vim.notify('No global marks set', vim.log.levels.INFO)
-    return
-  end
-
-  -- build floating window
-  table.insert(lines, 1, '  Global marks')
+  -- build header
+  table.insert(lines, 1, '  Used global marks (A-Z)')
   table.insert(lines, 2, '  ' .. string.rep('─', 44))
   table.insert(lines, '  ' .. string.rep('─', 44))
-  table.insert(lines, '  [*] = delete all   [ESC/q] = close')
+
+  if #lines == 2 then -- only header + separator = no marks yet
+    table.insert(lines, '  (none set)')
+  end
+
+  table.insert(lines, '  Press any A-Z to set — [ESC/q] = close')
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -76,71 +65,186 @@ map('n', '<Tab>md', function()
   local height = #lines
   local win = vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
-    width = width,
-    height = height,
-    row = math.floor((vim.o.lines - height) / 2),
-    col = math.floor((vim.o.columns - width) / 2),
-    style = 'minimal',
-    border = 'rounded',
-    title = ' marks ',
+    width    = width,
+    height   = height,
+    row      = math.floor((vim.o.lines - height) / 2),
+    col      = math.floor((vim.o.columns - width) / 2),
+    style    = 'minimal',
+    border   = 'rounded',
+    title    = ' add mark ',
     title_pos = 'center',
   })
   vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
 
-  -- close on ESC or q
   local close = function()
-    vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
   end
-  vim.keymap.set('n', 'q',   close, { buffer = buf, nowait = true })
+
+  vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
   vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
 
-  -- prompt after closing
-  vim.keymap.set('n', '<CR>', function()
+  -- bind A-Z directly: close window, then set the mark
+  for i = 65, 90 do  -- ASCII A=65 … Z=90
+    local letter = string.char(i)
+    vim.keymap.set('n', letter, function()
+      close()
+      vim.cmd('mark ' .. letter)
+      local status = used[letter] and ' (overwrote existing)' or ''
+      vim.notify('Global mark [' .. letter .. '] set' .. status, vim.log.levels.INFO)
+    end, { buffer = buf, nowait = true })
+  end
+end, { desc = 'Add Global Mark' })
+
+map('n', '<Tab>md', function()
+  local marks = vim.fn.getmarklist()
+  local lines = {}
+
+  -- 1. Filter for Global Marks (A-Z)
+  for _, m in ipairs(marks) do
+    if m.mark:match("^'[A-Z]$") then
+      local letter = m.mark:sub(2, 2)
+      local file = m.file or '[no file]'
+      file = file:gsub(vim.env.HOME, '~')
+      table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
+    end
+  end
+
+  -- 2. UI Formatting
+  table.insert(lines, 1, '  Used global marks (A-Z)')
+  table.insert(lines, 2, '  ' .. string.rep('─', 44))
+  
+  if #lines == 2 then
+    table.insert(lines, '  (none set)')
+  end
+  
+  table.insert(lines, '  ' .. string.rep('─', 44))
+  table.insert(lines, '  [A-Z]  →  delete specific mark')
+  table.insert(lines, '  [0]    →  delete ALL marks (A-Z, a-z, 0-9)')
+
+  -- 3. Window Creation
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
+
+  local width = 58
+  local height = #lines
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative   = 'editor',
+    width      = width,
+    height     = height,
+    row        = math.floor((vim.o.lines - height) / 2),
+    col        = math.floor((vim.o.columns - width) / 2),
+    style      = 'minimal',
+    border     = 'rounded',
+    title      = ' delete mark ',
+    title_pos  = 'center',
+    footer     = ' [q] close ',
+    footer_pos = 'center',
+  })
+  
+  vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
+
+  local close = function()
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
+
+  -- 4. Keybindings
+  vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
+  vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
+
+  -- Updated: Delete ALL custom marks
+  vim.keymap.set('n', '0', function()
     close()
-    vim.ui.input({ prompt = 'Delete mark (A-Z, or * for all): ' }, function(letter)
-      if not letter or letter == '' then return end
-      letter = letter:sub(1, 1):upper()
+    vim.cmd('delmarks a-z A-Z 0-9')
+    vim.notify('All custom and history marks deleted', vim.log.levels.WARN)
 
-      if letter == '*' then
-        vim.cmd('delmarks!')
-        vim.cmd('delmarks A-Z0-9')
-        vim.cmd("delmarks [] ' \" ^ . `")
-        vim.notify('All marks deleted', vim.log.levels.WARN)
-        return
-      end
+  end, { buffer = buf, nowait = true })
 
-      if not letter:match('[A-Z]') then
-        vim.notify('Invalid mark: only A-Z global marks allowed', vim.log.levels.WARN)
-        return
-      end
-
+  -- Delete specific global mark
+  for i = 65, 90 do
+    local letter = string.char(i)
+    vim.keymap.set('n', letter, function()
+      close()
       vim.cmd('delmarks ' .. letter)
       vim.notify('Global mark [' .. letter .. '] deleted', vim.log.levels.INFO)
-    end)
-  end, { buffer = buf, nowait = true })
-end, { desc = 'Delete Mark' })
+    end, { buffer = buf, nowait = true })
+  end
+end, { desc = 'Delete Mark UI' })
+
 
 -- map('n', '<Tab>md', function()
---   vim.ui.input({ prompt = 'Delete mark (A-Z, or * for all): ' }, function(letter)
---     if not letter or letter == '' then return end
---     letter = letter:sub(1, 1):upper()
+--   local marks = vim.fn.getmarklist()
+--   local lines = {}
 --
---     if letter == '*' then
---       vim.cmd('delmarks!')
---       vim.cmd('delmarks A-Z0-9')
---       -- vim.cmd("delmarks [] ' \" ^ . `")
---       vim.notify('All marks deleted', vim.log.levels.WARN)
---       return
+--
+--   for _, m in ipairs(marks) do
+--     if m.mark:match("'[A-Z]") then
+--       local letter = m.mark:sub(2, 2)
+--       local file = m.file or '[no file]'
+--       file = file:gsub(vim.env.HOME, '~')
+--       table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
 --     end
+--   end
 --
---     if not letter:match('[A-Z]') then
---       vim.notify('Invalid mark: only A-Z global marks allowed', vim.log.levels.WARN)
---       return
+--   table.insert(lines, 1, '  Used global marks (A-Z)')
+--   table.insert(lines, 2, '  ' .. string.rep('─', 44))
+--   table.insert(lines, '  ' .. string.rep('─', 44))
+--
+--   if #lines == 2 then
+--     table.insert(lines, '  (none set)')
+--   end
+--
+--   table.insert(lines, '  [A-Z]  →  delete mark')
+--   table.insert(lines, '  [0]    →  delete all marks')
+--
+--   local buf = vim.api.nvim_create_buf(false, true)
+--   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+--   vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
+--
+--   local width = 58
+--   local height = #lines
+--   local win = vim.api.nvim_open_win(buf, true, {
+--     relative   = 'editor',
+--     width      = width,
+--     height     = height,
+--     row        = math.floor((vim.o.lines - height) / 2),
+--     col        = math.floor((vim.o.columns - width) / 2),
+--     style      = 'minimal',
+--     border     = 'rounded',
+--     title      = ' delete mark ',
+--     title_pos  = 'center',
+--     footer     = ' [q] close ',
+--     footer_pos = 'center',
+--   })
+--   vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
+--
+--   local close = function()
+--     if vim.api.nvim_win_is_valid(win) then
+--       vim.api.nvim_win_close(win, true)
 --     end
+--   end
 --
---     vim.cmd('delmarks ' .. letter)
---     vim.notify('Global mark [' .. letter .. '] deleted', vim.log.levels.INFO)
---   end)
+--   vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
+--   vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
+--
+--   vim.keymap.set('n', '0', function()
+--     close()
+--     vim.cmd('delmarks!')
+--     vim.notify('All global marks deleted', vim.log.levels.WARN)
+--   end, { buffer = buf, nowait = true })
+--
+--   for i = 65, 90 do
+--     local letter = string.char(i)
+--     vim.keymap.set('n', letter, function()
+--       close()
+--       vim.cmd('delmarks ' .. letter)
+--       vim.notify('Global mark [' .. letter .. '] deleted', vim.log.levels.INFO)
+--     end, { buffer = buf, nowait = true })
+--   end
 -- end, { desc = 'Delete Mark' })
 
 map('n', 'za', function()
@@ -473,7 +577,6 @@ map({ "n", "v" }, "H", "<Nop>")
 map({ "n", "v" }, "J", "<Nop>")
 map({ "n", "v" }, "K", "<Nop>")
 map({ "n", "v" }, "L", "<Nop>")
--- map({'n','v'}, 'C', '<Nop>')
 map({ "n", "v" }, "Y", "<Nop>")
 map({ "n", "v" }, "P", "<Nop>")
 -- END OF FILE
