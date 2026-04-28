@@ -114,11 +114,11 @@ map('n', '<Tab>md', function()
   -- 2. UI Formatting
   table.insert(lines, 1, '  Used global marks (A-Z)')
   table.insert(lines, 2, '  ' .. string.rep('─', 44))
-  
+
   if #lines == 2 then
     table.insert(lines, '  (none set)')
   end
-  
+
   table.insert(lines, '  ' .. string.rep('─', 44))
   table.insert(lines, '  [A-Z]  →  delete specific mark')
   table.insert(lines, '  [0]    →  delete ALL marks (A-Z, a-z, 0-9)')
@@ -143,7 +143,7 @@ map('n', '<Tab>md', function()
     footer     = ' [q] close ',
     footer_pos = 'center',
   })
-  
+
   vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
 
   local close = function()
@@ -174,78 +174,6 @@ map('n', '<Tab>md', function()
     end, { buffer = buf, nowait = true })
   end
 end, { desc = 'Delete Mark UI' })
-
-
--- map('n', '<Tab>md', function()
---   local marks = vim.fn.getmarklist()
---   local lines = {}
---
---
---   for _, m in ipairs(marks) do
---     if m.mark:match("'[A-Z]") then
---       local letter = m.mark:sub(2, 2)
---       local file = m.file or '[no file]'
---       file = file:gsub(vim.env.HOME, '~')
---       table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
---     end
---   end
---
---   table.insert(lines, 1, '  Used global marks (A-Z)')
---   table.insert(lines, 2, '  ' .. string.rep('─', 44))
---   table.insert(lines, '  ' .. string.rep('─', 44))
---
---   if #lines == 2 then
---     table.insert(lines, '  (none set)')
---   end
---
---   table.insert(lines, '  [A-Z]  →  delete mark')
---   table.insert(lines, '  [0]    →  delete all marks')
---
---   local buf = vim.api.nvim_create_buf(false, true)
---   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
---   vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
---
---   local width = 58
---   local height = #lines
---   local win = vim.api.nvim_open_win(buf, true, {
---     relative   = 'editor',
---     width      = width,
---     height     = height,
---     row        = math.floor((vim.o.lines - height) / 2),
---     col        = math.floor((vim.o.columns - width) / 2),
---     style      = 'minimal',
---     border     = 'rounded',
---     title      = ' delete mark ',
---     title_pos  = 'center',
---     footer     = ' [q] close ',
---     footer_pos = 'center',
---   })
---   vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
---
---   local close = function()
---     if vim.api.nvim_win_is_valid(win) then
---       vim.api.nvim_win_close(win, true)
---     end
---   end
---
---   vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
---   vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
---
---   vim.keymap.set('n', '0', function()
---     close()
---     vim.cmd('delmarks!')
---     vim.notify('All global marks deleted', vim.log.levels.WARN)
---   end, { buffer = buf, nowait = true })
---
---   for i = 65, 90 do
---     local letter = string.char(i)
---     vim.keymap.set('n', letter, function()
---       close()
---       vim.cmd('delmarks ' .. letter)
---       vim.notify('Global mark [' .. letter .. '] deleted', vim.log.levels.INFO)
---     end, { buffer = buf, nowait = true })
---   end
--- end, { desc = 'Delete Mark' })
 
 map('n', 'za', function()
   vim.cmd('normal! za')
@@ -300,6 +228,11 @@ map({ "n", "v" }, "<C-h>", "_", { noremap = true, silent = true })
 -- BUFFERS
 map("n", "<leader><Right>", "<Cmd>silent! bnext<CR>", { noremap = true, silent = true })
 map("n", "<leader><Left>", "<Cmd>silent! bprevious<CR>", { noremap = true, silent = true })
+
+-- HEALTH BAR
+map("n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc="Open healthbar" })
+map("n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc="Close healthbar" })
+map("n", "<Tab>hr", ":Healthbar reset<CR>", { noremap = true, silent = true, desc="Reset healthbar" })
 
 -- 4. INSERTING & EDITING
 map("n", "o", "o<Esc>zz", { noremap = true, silent = true })
@@ -401,36 +334,6 @@ map({ "n", "i" }, "<F1>", function()
   end
   vim.api.nvim_buf_set_text(0, row - 1, 0, row - 1, 0, { line })
 end)
-
--- map({ "n", "i" }, "<F2>", function()
---   local input = vim.fn.input("Calculator: ")
---   local solver = load("return " .. input)
---   if not solver then
---     vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
---     return
---   end
---   local ok, result = pcall(solver)
---   if ok and type(result) == "number" then
---     local result_value = " " .. tostring(result)
---     if vim.api.nvim_get_mode().mode == "i" then
---       vim.api.nvim_feedkeys(result_value, "n", false)
---     else
---       vim.api.nvim_put({ result_value }, "c", true, true)
---     end
---     return
---   end
---   vim.api.nvim_echo({ { "Invalid Math!", "ErrorMsg" } }, true, {})
--- end, { desc = "Calculate and insert math", silent = true })
-
--- vim.keymap.set({ "n", "i" }, "<F7>", function()
---   local link = vim.fn.input("Link: ")
---   if link == "" then
---     return
---   end
---   local command =
---   string.format('split | term python3 -m pip install yt-dlp; yt-dlp --netrc -x --audio-format mp3 "%s" ; exit', link)
---   vim.cmd(command)
--- end)
 
 -- TERMINAL
 map({ "n", "i", "t" }, "<F6>", "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true })
@@ -553,6 +456,8 @@ map("v", "<Tab>m", function()
     end,
   })
 end, { desc = "ll[m] tool", silent = true })
+
+
 
 
 -- 8. DEAD KEYS
