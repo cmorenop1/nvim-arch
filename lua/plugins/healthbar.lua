@@ -34,7 +34,7 @@ return {
       })
 
       vim.api.nvim_buf_call(health_buf, function()
-        local cmd = "bash $HOME/.config/nvim/interal/healthbar.sh"
+        local cmd = "bash $HOME/.config/nvim/scripts/healthbar.sh"
         health_chan = vim.fn.termopen(cmd, {
           on_exit = function()
             close_health()

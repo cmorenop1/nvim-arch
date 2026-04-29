@@ -214,14 +214,6 @@ map("n", "<BS>", "_zz", { noremap = true, silent = true })
 map({ "n", "v" }, "k", "kzz", { noremap = true, silent = true })
 map({ "n", "v" }, "j", "jzz", { noremap = true, silent = true })
 
--- map({ "n" }, "<Tab>s", function()
---   vim.cmd("normal! mm")
---   vim.cmd("normal! Vip=")
---   vim.cmd("normal! `m")
---   vim.cmd("normal! zz")
---   vim.cmd("delmarks m")
--- end, { noremap = true, silent = true, desc = "Format [s]election" })
-
 -- PAGE JUMPS
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
@@ -392,13 +384,11 @@ map("v", "<Tab>m", function()
   -- Language constraint injected at the top of the payload
   -- 3. Load System Prompt from External File
   local prompt_path = "~/scripts/system_prompt.txt"
-  local system_prompt = read_file(prompt_path) or [[
-IMPORTANT: Your response must always be in English language.
-]]
+  local llm_tool_path = "$HOME/.config/nvim/scripts/llm-tool.sh"
 
+  local system_prompt = read_file(prompt_path) or "IMPORTANT: Your response must always be in English language."
   local full_payload = system_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
-
-  local script_path = vim.fn.expand("$HOME/scripts/llm-tool.sh")
+  local script_path = vim.fn.expand(llm_tool_path)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
 
