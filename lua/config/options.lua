@@ -35,4 +35,6 @@ vim.opt.relativenumber = true
 vim.g.minipairs_disable = true
 vim.o.autowriteall = true
 vim.g.autoformat = false
-vim.g.lazyvim_python_lsp = "ty"
+-- THIS SH*T IS A F*CKING BETA RELEASE / NOT PROD READY BROKEN
+-- vim.g.lazyvim_python_lsp = "ty"
+vim.g.lazyvim_python_lsp = "basedpyright"
