@@ -213,6 +213,9 @@ map("n", "<S-Down>", "<Down>0_zz", { noremap = true, silent = true })
 map("n", "<BS>", "_zz", { noremap = true, silent = true })
 map({ "n", "v" }, "k", "kzz", { noremap = true, silent = true })
 map({ "n", "v" }, "j", "jzz", { noremap = true, silent = true })
+map('n', '<Tab>b', '/[({\\[]<CR>', { noremap = true, silent = true, desc = "Next [b]racket" })
+map('n', '<Tab>B', '?[({\\[]<CR>', { noremap = true, silent = true, desc = "Prev [b]racket" })
+
 
 -- PAGE JUMPS
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
