@@ -383,7 +383,7 @@ map("v", "<Tab>m", function()
 
   -- Language constraint injected at the top of the payload
   -- 3. Load System Prompt from External File
-  local prompt_path = "~/scripts/system_prompt.txt"
+  local prompt_path = "$HOME/.config/nvim/scripts/system_prompt.txt"
   local llm_tool_path = "$HOME/.config/nvim/scripts/llm-tool.sh"
 
   local system_prompt = read_file(prompt_path) or "IMPORTANT: Your response must always be in English language."

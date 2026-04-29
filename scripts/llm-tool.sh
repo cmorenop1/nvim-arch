@@ -1,13 +1,7 @@
 #!/bin/bash
 
 # 1. Load variables
-source "$HOME/.env"
-
-# Check if .env exists; if not, output JSON error and exit
-if [ ! -f "$ENV_FILE" ]; then
-  echo '{"error": "Missing .env file"}'
-  exit 1
-fi
+source "$HOME/.config/nvim/.env"
 
 USER_INPUT="$1"
 
