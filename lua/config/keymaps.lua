@@ -3,6 +3,16 @@ local map = vim.keymap.set
 local home = vim.uv.os_homedir()
 
 -- 1. SEARCHING
+-- Scalable File Reader for Prompts/Configs
+local function read_file(path)
+  local expanded_path = vim.fn.expand(path)
+  local file = io.open(expanded_path, "r")
+  if not file then return nil end
+  local content = file:read("*a")
+  file:close()
+  return content
+end
+
 local function get_project_root()
   local dir = vim.fn.getcwd()
   local markers = { ".git" } -- TREE CEILING
@@ -232,7 +242,10 @@ map("n", "<leader><Left>", "<Cmd>silent! bprevious<CR>", { noremap = true, silen
 -- HEALTH BAR
 map("n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc="Open healthbar" })
 map("n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc="Close healthbar" })
-map("n", "<Tab>hr", ":Healthbar reset<CR>", { noremap = true, silent = true, desc="Reset healthbar" })
+vim.keymap.set('n', '<Tab>hh', function()
+  vim.notify('HEAL!!')
+  vim.cmd('Healthbar reset')
+end, { desc = 'Heal healthbar' })
 
 -- 4. INSERTING & EDITING
 map("n", "o", "o<Esc>zz", { noremap = true, silent = true })
@@ -304,9 +317,10 @@ end, { desc = "Replace word" })
 
 
 map("n", "<leader>p", function()
+  local current_word = vim.fn.expand("<cword>")
   local dir = vim.fn.expand("%:.")
   local formatted = dir:gsub("/", "."):gsub("%.py$", "")
-  local output = "from " .. formatted .. " import"
+  local output = "from " .. formatted .. " import " .. current_word
   vim.fn.setreg("0", output)
   vim.fn.setreg("+", output)
   vim.notify("Relative path copied to clipboard", vim.log.levels.INFO)
@@ -375,7 +389,12 @@ map("v", "<Tab>m", function()
   end
 
   -- Language constraint injected at the top of the payload
-  local system_prompt = "IMPORTANT: Your response must always be in English language.\n\n"
+  -- 3. Load System Prompt from External File
+  local prompt_path = "~/scripts/system_prompt.txt"
+  local system_prompt = read_file(prompt_path) or [[
+IMPORTANT: Your response must always be in English language.
+]]
+
   local full_payload = system_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
 
   local script_path = vim.fn.expand("$HOME/scripts/llm-tool.sh")
@@ -456,8 +475,6 @@ map("v", "<Tab>m", function()
     end,
   })
 end, { desc = "ll[m] tool", silent = true })
-
-
 
 
 -- 8. DEAD KEYS
