@@ -11,3 +11,9 @@ vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
   command = "silent! wall",
   nested = true,
 })
+
+vim.api.nvim_create_autocmd("BufReadPost", {
+  callback = function()
+    require("mini.map").open()
+  end,
+})
