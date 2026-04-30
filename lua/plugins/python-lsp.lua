@@ -7,7 +7,6 @@ return {
         settings = {
           basedpyright = {
             analysis = {
-
               typeCheckingMode = "all",
             },
           },
@@ -24,9 +23,9 @@ return {
       pyright = {
         enabled = false,
       },
-      ty = {
-        enabled = false,
-      },
+      -- ty = {
+      --   enabled = false,
+      -- },
     },
   },
 }
