@@ -23,7 +23,7 @@ return {
           focusable = true,
           side = "right",
           width = 6,
-          winblend = 15,
+          winblend = 50,
         },
       }
     end,
