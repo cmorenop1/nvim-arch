@@ -38,7 +38,8 @@ return {
       defaults = {
         file_ignore_patterns = {
           "node_modules/",
-          "%.git/",       -- use lua patterns, not globs
+          "vendor/",
+          "%.git/",
           "%.env/",
           "%.venv/",
           "%.ruff_cache/",

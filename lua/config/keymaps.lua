@@ -15,7 +15,7 @@ end
 
 local function get_project_root()
   local dir = vim.fn.getcwd()
-  local markers = { ".git" } -- TREE CEILING
+  local markers = { ".git", ".gitignore" }
   while dir ~= home and dir ~= "/" do
     for _, m in ipairs(markers) do
       if vim.fn.isdirectory(dir .. "/" .. m) == 1 or vim.fn.filereadable(dir .. "/" .. m) == 1 then
