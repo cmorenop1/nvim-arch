@@ -270,6 +270,15 @@ for trigger, target in pairs(delimiters) do
 end
 
 -- 6. TAB RULES
+map({ "n" }, "<Tab>a",function()
+  vim.lsp.buf.code_action()
+  vim.lsp.buf.code_action({
+    context = { only = { "source.organizeImports" } },
+    apply = true,
+  })
+end, { noremap = true, silent = true, desc = "LSP Actions" })
+
+
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
 map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })

@@ -1,4 +1,3 @@
--- nvim/lua/plugins/lsp.lua
 return {
   "neovim/nvim-lspconfig",
   opts = {
@@ -8,11 +7,14 @@ return {
           basedpyright = {
             analysis = {
               typeCheckingMode = "all",
+              autoImportCompletions = true,
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+              diagnosticMode = "workspace",
             },
           },
         },
       },
-
       ruff = {
         on_attach = function(client)
           client.server_capabilities.hoverProvider = false
@@ -20,12 +22,8 @@ return {
           client.server_capabilities.referencesProvider = false
         end,
       },
-      pyright = {
-        enabled = false,
-      },
-      -- ty = {
-      --   enabled = false,
-      -- },
+      pyright = { enabled = false },  -- ← conflicts with basedpyright, kill it
+      ty     = { enabled = false },  -- ← was stealing your code actions, kill it
     },
   },
 }
