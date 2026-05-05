@@ -39,7 +39,6 @@ map('n', '<Tab>ml', function()
   require('telescope.builtin').marks()
 end, { desc = 'List marks' })
 
-
 map('n', '<Tab>ma', function()
   -- collect global marks (A-Z) only
   local marks = vim.fn.getmarklist()
@@ -184,11 +183,6 @@ map('n', '<Tab>md', function()
     end, { buffer = buf, nowait = true })
   end
 end, { desc = 'Delete Mark UI' })
-
-map('n', 'za', function()
-  vim.cmd('normal! za')
-  vim.notify('[za] Folding!!')
-end, { desc = 'Toggle Folding' })
 
 -- 2. DELETING & YANKING
 map("n", "D", '"_ld$', { desc = "[D]elete until EOL" })
