@@ -202,6 +202,19 @@ map("n", "ciW", '"_ciW', { noremap = true, silent = true, desc = "[c]hange" })
 map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
 map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
 
+map("n", "<Tab>x", function()
+  vim.cmd("bd!")
+  vim.notify("Buffer closed")
+end, { noremap = true, silent = true, desc = "Close current buffer" })
+
+map("n", "<Tab>X", function()
+  local bufs = vim.fn.getbufinfo({ buflisted = 1 })
+  for _, buf in ipairs(bufs) do
+    vim.cmd("bd! " .. buf.bufnr)
+  end
+  vim.notify("All buffers closed")
+end, { noremap = true, silent = true, desc = "Close all buffers" })
+
 -- 3. MOVING AROUND
 map("n", "gg", "gg_", { noremap = true, silent = true })
 map("n", "G", "G_", { noremap = true, silent = true })
