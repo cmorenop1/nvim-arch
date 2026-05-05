@@ -270,18 +270,20 @@ for trigger, target in pairs(delimiters) do
 end
 
 -- 6. TAB RULES
-map({ "n" }, "<Tab>k",function()
+map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
-  vim.lsp.buf.code_action({
-    context = { only = { "source.organizeImports" } },
-    apply = true,
-  })
+end, { noremap = true, silent = true, desc = "LSP Actions" })
+
+map({ "n" }, "<Tab><Tab>", function()
   vim.lsp.stop_client(vim.lsp.get_clients())
   vim.defer_fn(function()
     vim.cmd("edit")
   end, 500)
-end, { noremap = true, silent = true, desc = "LSP Actions" })
-
+  package.loaded["config.keymaps"] = nil
+  require("config.keymaps")
+  vim.cmd("e!")
+  vim.notify("Reload!", vim.log.levels.INFO)
+end, { noremap = true, silent = true, desc = "LSP Restart" })
 
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
@@ -297,11 +299,8 @@ map("n", "<Tab>f", function()
   })
   vim.api.nvim_win_set_cursor(win, cursor)
   vim.cmd("normal! zz")
-  vim.lsp.stop_client(vim.lsp.get_clients())
-  vim.defer_fn(function()
-    vim.cmd("edit")
-  end, 500)
 end, { noremap = true, silent = true, desc = "Format File" })
+
 
 -- 7. BIG TOOLS
 map("n", "<leader>m", "<Cmd>Mason<CR>", { noremap = true, silent = true })
