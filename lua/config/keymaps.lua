@@ -276,6 +276,10 @@ map({ "n" }, "<Tab>k",function()
     context = { only = { "source.organizeImports" } },
     apply = true,
   })
+  vim.lsp.stop_client(vim.lsp.get_clients())
+  vim.defer_fn(function()
+    vim.cmd("edit")
+  end, 500)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
 
@@ -293,6 +297,10 @@ map("n", "<Tab>f", function()
   })
   vim.api.nvim_win_set_cursor(win, cursor)
   vim.cmd("normal! zz")
+  vim.lsp.stop_client(vim.lsp.get_clients())
+  vim.defer_fn(function()
+    vim.cmd("edit")
+  end, 500)
 end, { noremap = true, silent = true, desc = "Format File" })
 
 -- 7. BIG TOOLS
