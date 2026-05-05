@@ -196,6 +196,9 @@ map({ "n", "x" }, "d", '"_d', { noremap = true, silent = true, desc = "Delete wi
 map("n", "dd", '"_dd', { noremap = true, silent = true, desc = "Delete line without yanking" })
 map("n", "<Tab>y", "yiw", { noremap = true, silent = true, desc = "[y]ank" })
 map("n", "<Tab>c", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
+map("n", "ciq", '"_ciq', { noremap = true, silent = true, desc = "[c]hange" })
+map("n", "ciw", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
+map("n", "ciW", '"_ciW', { noremap = true, silent = true, desc = "[c]hange" })
 map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
 map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
 
@@ -274,15 +277,14 @@ map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
-map({ "n" }, "<Tab><Tab>", function()
-  vim.lsp.stop_client(vim.lsp.get_clients())
-  vim.defer_fn(function()
-    vim.cmd("edit")
-  end, 500)
-  package.loaded["config.keymaps"] = nil
-  require("config.keymaps")
-  vim.cmd("e!")
-  vim.notify("Reload!", vim.log.levels.INFO)
+map({ "n" }, "<Tab>l", function()
+  local clients = vim.lsp.get_active_clients()
+  for _, client in ipairs(clients) do
+    pcall(vim.lsp.stop_client, client)
+  end
+  vim.cmd('silent! edit')
+  vim.notify('LSP Restarted', vim.log.levels.INFO)
+  vim.cmd("normal! zz")
 end, { noremap = true, silent = true, desc = "LSP Restart" })
 
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
