@@ -206,12 +206,14 @@ map("n", "<Tab>x", function()
   vim.cmd("bd!")
   vim.notify("Buffer closed")
 end, { noremap = true, silent = true, desc = "Close current buffer" })
-
 map("n", "<Tab>X", function()
   local bufs = vim.fn.getbufinfo({ buflisted = 1 })
   for _, buf in ipairs(bufs) do
     vim.cmd("bd! " .. buf.bufnr)
   end
+  vim.cmd("enew")
+  vim.cmd("Alpha")
+  vim.cmd("bd! #")
   vim.notify("All buffers closed")
 end, { noremap = true, silent = true, desc = "Close all buffers" })
 
