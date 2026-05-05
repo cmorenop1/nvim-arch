@@ -270,7 +270,7 @@ for trigger, target in pairs(delimiters) do
 end
 
 -- 6. TAB RULES
-map({ "n" }, "<Tab>a",function()
+map({ "n" }, "<Tab>k",function()
   vim.lsp.buf.code_action()
   vim.lsp.buf.code_action({
     context = { only = { "source.organizeImports" } },

@@ -25,8 +25,8 @@ return {
           client.server_capabilities.referencesProvider = false
         end,
       },
-      pyright = { enabled = false },  -- ← conflicts with basedpyright, kill it
-      ty     = { enabled = false },  -- ← was stealing your code actions, kill it
+      pyright = { enabled = false },
+      ty     = { enabled = false },
     },
   },
 }
