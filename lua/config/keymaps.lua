@@ -277,15 +277,15 @@ map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
-map({ "n" }, "<Tab>l", function()
-  local clients = vim.lsp.get_active_clients()
-  for _, client in ipairs(clients) do
-    pcall(vim.lsp.stop_client, client)
-  end
-  vim.cmd('silent! edit')
-  vim.notify('LSP Restarted', vim.log.levels.INFO)
-  vim.cmd("normal! zz")
-end, { noremap = true, silent = true, desc = "LSP Restart" })
+-- map({ "n" }, "<Tab>l", function()
+--   local clients = vim.lsp.get_active_clients()
+--   for _, client in ipairs(clients) do
+--     pcall(vim.lsp.stop_client, client)
+--   end
+--   vim.cmd('silent! edit')
+--   vim.notify('LSP Restarted', vim.log.levels.INFO)
+--   vim.cmd("normal! zz")
+-- end, { noremap = true, silent = true, desc = "LSP Restart" })
 
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
