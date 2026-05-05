@@ -313,6 +313,7 @@ map("n", "<F5>", function()
   require("config.keymaps")
   vim.cmd("e!")
   vim.notify("Reload!", vim.log.levels.INFO)
+  vim.cmd("normal! zz")
 end, { desc = "Reload!" })
 
 map("n", "<leader>r", function()
