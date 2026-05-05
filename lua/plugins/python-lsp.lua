@@ -9,11 +9,11 @@ return {
         settings = {
           basedpyright = {
             analysis = {
-              typeCheckingMode = "all",
+              typeCheckingMode = "off",
               autoImportCompletions = true,
               autoSearchPaths = true,
               useLibraryCodeForTypes = true,
-              diagnosticMode = "workspace",
+              diagnosticMode = "openFilesOnly",
             },
           },
         },
