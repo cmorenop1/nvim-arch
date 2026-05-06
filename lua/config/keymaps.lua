@@ -190,9 +190,6 @@ map({ "n", "x" }, "d", '"_d', { noremap = true, silent = true, desc = "Delete wi
 map("n", "dd", '"_dd', { noremap = true, silent = true, desc = "Delete line without yanking" })
 map("n", "<Tab>y", "yiw", { noremap = true, silent = true, desc = "[y]ank" })
 map("n", "<Tab>c", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
-map("n", "ciq", '"_ciq', { noremap = true, silent = true, desc = "[c]hange" })
-map("n", "ciw", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
-map("n", "ciW", '"_ciW', { noremap = true, silent = true, desc = "[c]hange" })
 map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
 map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
 
