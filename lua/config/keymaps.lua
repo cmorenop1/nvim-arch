@@ -284,6 +284,11 @@ end
 -- 6. TAB RULES
 map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
+  vim.lsp.buf.code_action({
+    context = { only = { "source.organizeImports" } },
+    apply = true,
+  })
+  vim.notify('Organise!!', vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
 -- map({ "n" }, "<Tab>l", function()
