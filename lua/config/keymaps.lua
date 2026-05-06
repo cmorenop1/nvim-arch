@@ -6,6 +6,21 @@ local home = vim.uv.os_homedir()
 -- PRIVATE FUNCTIONS
 --///////////////////////////////////////
 
+local function _reload_config()
+  -- 1. Unload the module from the Lua cache
+  package.loaded["config.keymaps"] = nil
+
+  -- 2. Re-require the file to apply changes
+  require("config.keymaps")
+
+  -- 3. Force reload the current buffer to reflect any external changes
+  vim.cmd("e!")
+
+  -- 4. Provide visual feedback and center the cursor
+  vim.notify("Reload!", vim.log.levels.INFO)
+  vim.cmd("normal! zz")
+end
+
 local function _organise_imports()
   local win = 0
   local cursor = vim.api.nvim_win_get_cursor(win)
@@ -300,40 +315,28 @@ end
 -- 6. TAB RULES
 map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
-  vim.lsp.buf.code_action({
-    context = { only = { "source.organizeImports" } },
-    apply = true,
-  })
+  _organise_imports()
+  _reload_config()
   vim.notify('Organise!!', vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
-
--- map({ "n" }, "<Tab>l", function()
---   local clients = vim.lsp.get_active_clients()
---   for _, client in ipairs(clients) do
---     pcall(vim.lsp.stop_client, client)
---   end
---   vim.cmd('silent! edit')
---   vim.notify('LSP Restarted', vim.log.levels.INFO)
---   vim.cmd("normal! zz")
--- end, { noremap = true, silent = true, desc = "LSP Restart" })
 
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
 map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })
-map("n", "<Tab>f",_organise_imports , { noremap = true, silent = true, desc = "Format File" })
-
-
--- 7. BIG TOOLS
+map("n", "<Tab>f", _organise_imports , { noremap = true, silent = true, desc = "Format File" })
 map("n", "<leader>m", "<Cmd>Mason<CR>", { noremap = true, silent = true })
 map("n", "<leader>M", "<Cmd>LazyExtras<CR>", { noremap = true, silent = true })
 
-map("n", "<F5>", function()
-  package.loaded["config.keymaps"] = nil
-  require("config.keymaps")
-  vim.cmd("e!")
-  vim.notify("Reload!", vim.log.levels.INFO)
-  vim.cmd("normal! zz")
-end, { desc = "Reload!" })
+
+vim.keymap.set("n", "<F5>", _reload_config, {desc = "Reload!"})
+
+-- map("n", "<F5>", function()
+--   package.loaded["config.keymaps"] = nil
+--   require("config.keymaps")
+--   vim.cmd("e!")
+--   vim.notify("Reload!", vim.log.levels.INFO)
+--   vim.cmd("normal! zz")
+-- end, { desc = "Reload!" })
 
 map("n", "<leader>r", function()
   local win = 0
