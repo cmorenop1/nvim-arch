@@ -2,9 +2,26 @@
 local map = vim.keymap.set
 local home = vim.uv.os_homedir()
 
--- 1. SEARCHING
--- Scalable File Reader for Prompts/Configs
-local function read_file(path)
+--///////////////////////////////////////
+-- PRIVATE FUNCTIONS
+--///////////////////////////////////////
+
+local function _organise_imports()
+  local win = 0
+  local cursor = vim.api.nvim_win_get_cursor(win)
+
+  vim.cmd("normal! ggVG=")
+
+  vim.lsp.buf.code_action({
+    context = { only = { "source.organizeImports" } },
+    apply = true,
+  })
+
+  vim.api.nvim_win_set_cursor(win, cursor)
+  vim.cmd("normal! zz")
+end
+
+local function _read_file(path)
   local expanded_path = vim.fn.expand(path)
   local file = io.open(expanded_path, "r")
   if not file then return nil end
@@ -13,7 +30,7 @@ local function read_file(path)
   return content
 end
 
-local function get_project_root()
+local function _get_project_root()
   local dir = vim.fn.getcwd()
   local markers = { ".git", ".gitignore" }
   while dir ~= home and dir ~= "/" do
@@ -27,12 +44,14 @@ local function get_project_root()
   return vim.fn.getcwd()
 end
 
+--MAPPINGS
+
 map('n', '<leader><leader>', function()
-  require('telescope.builtin').find_files({ cwd = get_project_root() })
+  require('telescope.builtin').find_files({ cwd = _get_project_root() })
 end, { desc = 'Find Files' })
 
 map('n', '<leader>fg', function()
-  require('telescope.builtin').live_grep({ cwd = get_project_root() })
+  require('telescope.builtin').live_grep({ cwd = _get_project_root() })
 end, { desc = 'Find with GREP' })
 
 map('n', '<Tab>ml', function()
@@ -301,18 +320,7 @@ end, { noremap = true, silent = true, desc = "LSP Actions" })
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
 map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })
-
-map("n", "<Tab>f", function()
-  local win = 0
-  local cursor = vim.api.nvim_win_get_cursor(win)
-  vim.cmd("normal! ggVG=")
-  vim.lsp.buf.code_action({
-    context = { only = { "source.organizeImports" } },
-    apply = true,
-  })
-  vim.api.nvim_win_set_cursor(win, cursor)
-  vim.cmd("normal! zz")
-end, { noremap = true, silent = true, desc = "Format File" })
+map("n", "<Tab>f",_organise_imports , { noremap = true, silent = true, desc = "Format File" })
 
 
 -- 7. BIG TOOLS
@@ -419,7 +427,7 @@ map("v", "<Tab>m", function()
   local prompt_path = "$HOME/.config/nvim/scripts/system_prompt.txt"
   local llm_tool_path = "$HOME/.config/nvim/scripts/llm-tool.sh"
 
-  local system_prompt = read_file(prompt_path) or "IMPORTANT: Your response must always be in English language."
+  local system_prompt = _read_file(prompt_path) or "IMPORTANT: Your response must always be in English language."
   local full_payload = system_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
   local script_path = vim.fn.expand(llm_tool_path)
   local buf = vim.api.nvim_create_buf(false, true)
