@@ -261,7 +261,13 @@ map('n', '<Tab>b', '/[({\\[]<CR>', { noremap = true, silent = true, desc = "Next
 map('n', '<Tab>B', '?[({\\[]<CR>', { noremap = true, silent = true, desc = "Prev [b]racket" })
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
--- map({"n"},"<Tab><Down>", function()
+
+map({"n"},"<Tab><Down>", function()
+  local half = math.floor(vim.fn.col("$") / 2)
+  vim.fn.cursor(0, half)
+  vim.cmd("normal! zz")
+end, { noremap = true, silent = true, desc = "Go to middle of line" })
+
 map({"n"},"<Tab>0", function()
   local half = math.floor(vim.fn.col("$") / 2)
   vim.fn.cursor(0, half)
