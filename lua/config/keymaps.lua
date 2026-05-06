@@ -34,6 +34,7 @@ local function _organise_imports()
 
   vim.api.nvim_win_set_cursor(win, cursor)
   vim.cmd("normal! zz")
+  _reload_config()
 end
 
 local function _read_file(path)
