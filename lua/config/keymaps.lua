@@ -34,7 +34,7 @@ local function _organise_imports()
 
   vim.api.nvim_win_set_cursor(win, cursor)
   vim.cmd("normal! zz")
-  _reload_config()
+  -- _reload_config()
 end
 
 local function _read_file(path)
@@ -266,6 +266,10 @@ map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
 map({ "n", "v" }, "<Tab>]", "<C-d>zz0", { noremap = true, silent = true, desc = "Go half page down" })
 map({ "n", "v" }, "<Tab>[", "<C-u>zz0", { noremap = true, silent = true, desc = "Go half page down" })
+map({"n"},"<Tab><Down>", function()
+  local half = math.floor(vim.fn.col("$") / 2)
+  vim.fn.cursor(0, half)
+end, { noremap = true, silent = true, desc = "Go to middle of line" })
 
 -- WORD MOVES
 map({ "n", "v" }, "<C-Right>", "e", { noremap = true, silent = true })
