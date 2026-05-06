@@ -265,6 +265,7 @@ map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
 map({"n"},"<Tab>0", function()
   local half = math.floor(vim.fn.col("$") / 2)
   vim.fn.cursor(0, half)
+  vim.cmd("normal! zz")
 end, { noremap = true, silent = true, desc = "Go to middle of line" })
 
 map({ "n", "v" }, "<C-Right>", "e", { noremap = true, silent = true })
