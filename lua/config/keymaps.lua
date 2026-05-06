@@ -259,20 +259,14 @@ map({ "n", "v" }, "k", "kzz", { noremap = true, silent = true })
 map({ "n", "v" }, "j", "jzz", { noremap = true, silent = true })
 map('n', '<Tab>b', '/[({\\[]<CR>', { noremap = true, silent = true, desc = "Next [b]racket" })
 map('n', '<Tab>B', '?[({\\[]<CR>', { noremap = true, silent = true, desc = "Prev [b]racket" })
-
-
--- PAGE JUMPS
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
-map({ "n", "v" }, "<Tab>]", "<C-d>zz0", { noremap = true, silent = true, desc = "Go half page down" })
-map({ "n", "v" }, "<Tab>[", "<C-u>zz0", { noremap = true, silent = true, desc = "Go half page down" })
 -- map({"n"},"<Tab><Down>", function()
 map({"n"},"<Tab>0", function()
   local half = math.floor(vim.fn.col("$") / 2)
   vim.fn.cursor(0, half)
 end, { noremap = true, silent = true, desc = "Go to middle of line" })
 
--- WORD MOVES
 map({ "n", "v" }, "<C-Right>", "e", { noremap = true, silent = true })
 map({ "n", "v" }, "<C-Left>", "b", { noremap = true, silent = true })
 map({ "n", "v" }, "<S-l>", "w", { noremap = true, silent = true })
