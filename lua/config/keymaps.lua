@@ -139,6 +139,7 @@ local LSP = {}
 ---@param delay_ms? integer  Default 500 ms.
 
 function LSP.format_file(delay_ms)
+  notify("Format!!", vim.log.levels.INFO)
   lsp.code_action({
     context = { only = { "source.organizeImports" } },
     apply   = true,
@@ -148,7 +149,6 @@ function LSP.format_file(delay_ms)
     lsp.format({ async = false })
     api.nvim_win_set_cursor(0, cursor)
   end, delay_ms or 500)
-  notify("Format!!", vim.log.levels.INFO)
 end
 
 --- Open LSP code-actions then run a full format pass.
