@@ -631,7 +631,7 @@ local MAPS = {
   { { "n", "v" },      "<S-h>",            "b",                            { noremap = true, silent = true } },
   { { "n", "v" },      "<C-l>",            "$",                            { noremap = true, silent = true } },
   { { "n", "v" },      "<C-h>",            "_",                            { noremap = true, silent = true } },
-  { "n",               "<Tab><Right>",     "$",                            { noremap = true, silent = true, desc = "Go right" } },
+  { { "n", "v" },      "<Tab><Right>",     "$",                            { noremap = true, silent = true, desc = "Go right" } },
   { { "n", "v" },      "<Tab><Left>",      "_",                            { noremap = true, silent = true, desc = "Go left" } },
   { { "n", "v" },      "<Tab><Up>",        "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go top" } },
   { "n",               "<Tab>b",           "/[({\\[]<CR>",                 { noremap = true, silent = true, desc = "Next bracket" } },
