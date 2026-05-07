@@ -10,7 +10,7 @@ return {
             positionEncodings = { "utf-16" },
           },
         },
-        init_options = { disablePullDiagnostics = true },
+        -- init_options = { disablePullDiagnostics = true },
         settings = {
           basedpyright = {
             typeCheckingMode = "off",
