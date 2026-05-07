@@ -168,7 +168,7 @@ function LSP.go_to_definition()
   -- Wait 1 second, then center
   vim.defer_fn(function()
     vim.cmd("normal! zz")
-  end, 3000) -- 1000 ms = 1 second
+  end, 2000)
 end
 
 -- ── 3b  CONFIG ───────────────────────────────────────────────────────────────
