@@ -174,29 +174,15 @@ local Config = {}
 
 function Config.reload()
   package.loaded["config.keymaps"] = nil
-
   require("config.keymaps")
-
   vim.cmd("e!")
-
   notify("Reload!", vim.log.levels.INFO)
-
   vim.cmd("normal! zz")
 end
 
--- ── 3c  BUFFERS ───────────────────────────────────────────────────────────────
-
-
-
 local Buf = {}
-
-
-
---- Close the current buffer.
-
 function Buf.close_current()
   vim.cmd("bd!")
-
   notify("Buffer closed")
 end
 
@@ -208,43 +194,25 @@ function Buf.close_all()
   end
 
   vim.cmd("enew")
-
   vim.cmd("Alpha")
-
   vim.cmd("bd! #")
-
   notify("All buffers closed")
 end
 
--- ── 3d  MARKS ────────────────────────────────────────────────────────────────
-
-
-
 local Marks = {}
-
-
-
---- Collect global marks (A-Z) from the global mark list.
-
 ---@return { letter:string, file:string, line:integer }[]
-
 local function _global_marks()
   local out = {}
 
   for _, m in ipairs(fn.getmarklist()) do
     if m.mark:match("^'[A-Z]$") then
       table.insert(out, {
-
         letter = m.mark:sub(2, 2),
-
         file   = (m.file or "[no file]"):gsub(vim.env.HOME, "~"),
-
         line   = m.pos[2],
-
       })
     end
   end
-
   return out
 end
 
