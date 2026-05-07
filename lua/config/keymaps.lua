@@ -162,12 +162,10 @@ function LSP.actions_and_format()
 end
 
 function LSP.go_to_definition()
-  -- Force reload the current buffer
   vim.cmd("e!")
-  -- Trigger the LSP definition jump
   vim.lsp.buf.definition()
-  -- Notify the user
   vim.notify("Definition!!", vim.log.levels.INFO)
+  vim.cmd("normal! zz")
 end
 
 -- ── 3b  CONFIG ───────────────────────────────────────────────────────────────
