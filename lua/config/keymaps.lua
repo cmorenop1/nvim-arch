@@ -139,6 +139,7 @@ local LSP = {}
 ---@param delay_ms? integer  Default 500 ms.
 
 function LSP.format_file(delay_ms)
+  vim.cmd("e!")
   notify("Format!!", vim.log.levels.INFO)
   lsp.code_action({
     context = { only = { "source.organizeImports" } },
