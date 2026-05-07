@@ -576,259 +576,140 @@ local MAPS = {
 
 
   -- ── SEARCH / FILES ──────────────────────────────────────────────────────
-
   { "n",               "<leader><leader>", Editor.find_files,              { desc = "Find Files" } },
-
   { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find with GREP" } },
 
-
-
   -- ── MARKS ───────────────────────────────────────────────────────────────
-
   { "n",               "<Tab>ml",          Marks.list,                     { desc = "List marks" } },
-
   { "n",               "<Tab>ma",          Marks.add,                      { desc = "Add Global Mark" } },
-
   { "n",               "<Tab>md",          Marks.delete,                   { desc = "Delete Mark UI" } },
 
-
-
   -- ── DELETE / YANK ────────────────────────────────────────────────────────
-
   { "n",               "D",                '"_ld$',                        { desc = "Delete until EOL" } },
-
   { { "n", "x" },      "d",                '"_d',                          { noremap = true, silent = true, desc = "Delete without yanking" } },
-
   { "n",               "dd",               '"_dd',                         { noremap = true, silent = true, desc = "Delete line without yanking" } },
-
   { "n",               "<Tab>y",           "yiw",                          { noremap = true, silent = true, desc = "Yank word" } },
-
   { "n",               "<Tab>c",           '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
-
   { "n",               "C",                '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
-
   { { "n", "t" },      "<Tab>p",           '"_ciw<C-r>0<Esc>',             { noremap = true, silent = true, desc = "Paste inside word" } },
 
-
-
   -- ── BUFFERS ──────────────────────────────────────────────────────────────
-
   { "n",               "<Tab>x",           Buf.close_current,              { noremap = true, silent = true, desc = "Close current buffer" } },
-
   { "n",               "<Tab>X",           Buf.close_all,                  { noremap = true, silent = true, desc = "Close all buffers" } },
-
   { "n",               "<leader><Right>",  "<Cmd>silent! bnext<CR>",       { noremap = true, silent = true } },
-
   { "n",               "<leader><Left>",   "<Cmd>silent! bprevious<CR>",   { noremap = true, silent = true } },
 
-
-
   -- ── MOTION ───────────────────────────────────────────────────────────────
-
   { "n",               "gg",               "gg_",                          { noremap = true, silent = true } },
-
   { "n",               "G",                "G_",                           { noremap = true, silent = true } },
-
   { "n",               "$",                "$h",                           { noremap = true, silent = true } },
-
   { { "n", "v" },      "<Home>",           "_",                            { noremap = true, silent = true } },
-
   { "n",               "<C-d>",            "<Cmd>normal! <C-d>zz0<CR>",    { noremap = true, silent = true } },
-
   { "n",               "<C-u>",            "<Cmd>normal! <C-u>zz0<CR>",    { noremap = true, silent = true } },
-
   { { "n", "v", "x" }, "<Up>",             "<Up>zz",                       { noremap = true, silent = true } },
-
   { { "n", "v", "x" }, "<Down>",           "<Down>zz",                     { noremap = true, silent = true } },
-
   { "n",               "<S-Up>",           "<Up>0_zz",                     { noremap = true, silent = true } },
-
   { "n",               "<S-Down>",         "<Down>0_zz",                   { noremap = true, silent = true } },
-
   { "n",               "<BS>",             "_zz",                          { noremap = true, silent = true } },
-
   { { "n", "v" },      "k",                "kzz",                          { noremap = true, silent = true } },
-
   { { "n", "v" },      "j",                "jzz",                          { noremap = true, silent = true } },
-
   { { "n", "v" },      "<PageDown>",       "<C-d>zz0",                     { desc = "Half page down" } },
-
   { { "n", "v" },      "<PageUp>",         "<C-u>zz0",                     { desc = "Half page up" } },
-
   { "n",               "<Tab><Down>",      Editor.goto_line_middle,        { noremap = true, silent = true, desc = "Middle of line" } },
-
   { "n",               "<Tab>0",           Editor.goto_line_middle,        { noremap = true, silent = true, desc = "Middle of line" } },
-
   { { "n", "v" },      "<C-Right>",        "e",                            { noremap = true, silent = true } },
-
   { { "n", "v" },      "<C-Left>",         "b",                            { noremap = true, silent = true } },
-
   { { "n", "v" },      "<S-l>",            "w",                            { noremap = true, silent = true } },
-
   { { "n", "v" },      "<S-h>",            "b",                            { noremap = true, silent = true } },
-
   { { "n", "v" },      "<C-l>",            "$",                            { noremap = true, silent = true } },
-
   { { "n", "v" },      "<C-h>",            "_",                            { noremap = true, silent = true } },
-
   { "n",               "<Tab><Right>",     "$",                            { noremap = true, silent = true, desc = "Go right" } },
-
   { { "n", "v" },      "<Tab><Left>",      "_",                            { noremap = true, silent = true, desc = "Go left" } },
-
   { { "n", "v" },      "<Tab><Up>",        "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go top" } },
-
   { "n",               "<Tab>b",           "/[({\\[]<CR>",                 { noremap = true, silent = true, desc = "Next bracket" } },
-
   { "n",               "<Tab>B",           "?[])}>]<CR>",                  { noremap = true, silent = true, desc = "Prev bracket" } },
-
-
 
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
   { "n",               "<Tab>k",           LSP.actions_and_format,         { noremap = true, silent = true, desc = "LSP actions + format" } },
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
-
   { "n",               "<Tab>ho",          ":Healthbar open<CR>",          { noremap = true, silent = true, desc = "Open healthbar" } },
-
   { "n",               "<Tab>hc",          ":Healthbar close<CR>",         { noremap = true, silent = true, desc = "Close healthbar" } },
-
   { "n", "<Tab>hh", function()
     notify("HEAL!!")
-
     vim.cmd("Healthbar reset")
   end, { desc = "Heal healthbar" } },
 
-
-
   -- ── INSERT / EDIT ─────────────────────────────────────────────────────────
-
   { "n",               "o",         "o<Esc>zz",                              { noremap = true, silent = true } },
-
   { "n",               "O",         "O<Esc>zz",                              { noremap = true, silent = true } },
-
   { "n",               "<S-a>",     "a",                                     { noremap = true, silent = true } },
 
-
-
   -- ── REPLACE / PATHS ──────────────────────────────────────────────────────
-
   { "n",               "<leader>r", Editor.replace_word,                     { desc = "Replace word" } },
-
   { "n",               "<leader>p", Editor.copy_python_import,               { noremap = true, silent = true } },
 
-
-
   -- ── CONFIG ────────────────────────────────────────────────────────────────
-
   { "n",               "<F5>",      Config.reload,                           { desc = "Reload keymaps" } },
-
   { "n",               "<Tab>.",    Editor.edit_keymaps,                     { noremap = true, desc = "Edit keymaps file" } },
-
   { "n",               "<leader>m", "<Cmd>Mason<CR>",                        { noremap = true, silent = true } },
-
   { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                   { noremap = true, silent = true } },
 
-
-
   -- ── TERMINAL ──────────────────────────────────────────────────────────────
-
   { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true } },
 
 
-
   -- ── LLM TOOL ─────────────────────────────────────────────────────────────
-
   { "v",               "<Tab>m",    LLM.run,                                 { silent = true, desc = "LLM tool" } },
 
-
-
   -- ── DEBUG ─────────────────────────────────────────────────────────────────
-
   { { "n", "i" },      "<F1>",      Editor.insert_python_print,              {} },
-
 }
 
-
-
-
-
 -- ─────────────────────────────────────────────────────────────────────────────
-
 -- § 5  PARAMETRIC MAP GROUPS  (loops that generate multiple mappings)
-
 -- ─────────────────────────────────────────────────────────────────────────────
-
-
-
---- Append a character to the end of every line in a visual selection.
-
 ---@param char string
-
 local function _make_append_handler(char)
   return function()
     api.nvim_feedkeys(
-
       api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false
-
     )
-
     for lnum = fn.line("'<"), fn.line("'>") do
       fn.setline(lnum, fn.getline(lnum) .. char)
     end
   end
 end
 
-
-
 local function _register_parametric_maps()
-  -- Visual append: <Tab>a, <Tab>a; etc.
-
   for _, char in ipairs({ ",", ";", ":", "=" }) do
     map("v", "<Tab>a" .. char,
-
       _make_append_handler(char),
-
       { noremap = true, silent = true, desc = "Append [" .. char .. "] to block" })
   end
 
-
-
-  -- Surround: <leader>z{ wraps selection with }  etc.
-
   local delimiters = {
-
     ["{"] = "}",
     ["("] = ")",
     ["["] = "]",
-
     ["q"] = '"',
     ["s"] = "'",
     ["b"] = "`",
-
   }
-
   for trigger, target in pairs(delimiters) do
     map("x", "<leader>z" .. trigger,
-
       "gsa" .. target .. "h",
-
       { remap = true, silent = true, desc = "Surround with " .. target })
   end
 
-
-
-  -- Terminal close: F4 / F12 — escape insert/terminal modes then :bd!
-
   local function _term_close()
     local mode = fn.mode()
-
     if mode == "i" then
       api.nvim_feedkeys(api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
     elseif mode == "t" then
       api.nvim_feedkeys(api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", true)
     end
-
     vim.cmd("bd!")
   end
 
@@ -885,20 +766,16 @@ end
 -- ─────────────────────────────────────────────────────────────────────────────
 -- § 7  BOOTSTRAP  (single entry-point; apply everything)
 -- ─────────────────────────────────────────────────────────────────────────────
-
 function M.setup()
-  -- Apply the static registry
   for _, entry in ipairs(MAPS) do
     local modes, lhs, rhs, opts = entry[1], entry[2], entry[3], entry[4]
     map(modes, lhs, rhs, opts)
   end
-
   _register_parametric_maps()
   _register_dead_keys()
 end
 
 M.setup()
-
 
 
 return M
