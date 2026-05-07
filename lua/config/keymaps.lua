@@ -14,21 +14,23 @@ local function _reload_config()
   vim.cmd("normal! zz")
 end
 
-local function _organise_imports()
-  local win = 0
-  local cursor = vim.api.nvim_win_get_cursor(win)
-
-  vim.cmd("normal! ggVG=")
-
+local function _format_indentation()
   vim.lsp.buf.code_action({
     context = { only = { "source.organizeImports" } },
     apply = true,
   })
 
-  vim.api.nvim_win_set_cursor(win, cursor)
-  vim.cmd("e!")
-  vim.cmd("normal! zz")
+  vim.defer_fn(function()
+    local win = 0
+    local cursor = vim.api.nvim_win_get_cursor(win)
+
+    -- Use LSP formatter instead of ggVG=
+    vim.lsp.buf.format({ async = false })
+
+    vim.api.nvim_win_set_cursor(win, cursor)
+  end, 500)
 end
+
 
 local function _read_file(path)
   local expanded_path = vim.fn.expand(path)
@@ -251,7 +253,6 @@ map("n", "<BS>", "_zz", { noremap = true, silent = true })
 map({ "n", "v" }, "k", "kzz", { noremap = true, silent = true })
 map({ "n", "v" }, "j", "jzz", { noremap = true, silent = true })
 map('n', '<Tab>b', '/[({\\[]<CR>', { noremap = true, silent = true, desc = "Next [b]racket" })
--- map('n', '<Tab>B', '?[({\\[]<CR>', { noremap = true, silent = true, desc = "Prev [b]racket" })
 map('n', '<Tab>B', '?[])}>]<CR>', { noremap = true, silent = true, desc = "Prev closing bracket" })
 map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
 map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
@@ -317,14 +318,14 @@ end
 map({ "n" }, "<Tab>k", function()
   vim.cmd("e!")
   vim.lsp.buf.code_action()
-  _organise_imports()
+  _format_indentation()
   vim.notify('Organise!!', vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
 map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
 map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
 map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })
-map("n", "<Tab>f", _organise_imports , { noremap = true, silent = true, desc = "Format File" })
+map("n", "<Tab>f", _format_indentation , { noremap = true, silent = true, desc = "Format File" })
 map("n", "<leader>m", "<Cmd>Mason<CR>", { noremap = true, silent = true })
 map("n", "<leader>M", "<Cmd>LazyExtras<CR>", { noremap = true, silent = true })
 
