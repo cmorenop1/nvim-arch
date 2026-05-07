@@ -1,15 +1,19 @@
+-- python-lsp.lua
 return {
   "neovim/nvim-lspconfig",
   opts = {
-    inlay_hints = {
-      enabled = true,
-    },
+    inlay_hints = { enabled = true },
     servers = {
       basedpyright = {
+        capabilities = {
+          general = {
+            positionEncodings = { "utf-16" },
+          },
+        },
         settings = {
           basedpyright = {
+            typeCheckingMode = "off",
             analysis = {
-              typeCheckingMode = "off",
               autoImportCompletions = true,
               autoSearchPaths = true,
               useLibraryCodeForTypes = true,
@@ -19,6 +23,11 @@ return {
         },
       },
       ruff = {
+        capabilities = {
+          general = {
+            positionEncodings = { "utf-16" },
+          },
+        },
         on_attach = function(client)
           client.server_capabilities.hoverProvider = false
           client.server_capabilities.definitionProvider = false
