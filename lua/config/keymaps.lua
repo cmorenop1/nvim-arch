@@ -1,541 +1,939 @@
--- Author: Cristopher Moreno
-local map = vim.keymap.set
-local home = vim.uv.os_homedir()
+-- =============================================================================
+-- Author : Cristopher Moreno
+-- File   : keymaps.lua
+-- =============================================================================
 
---///////////////////////////////////////
--- PRIVATE FUNCTIONS
---///////////////////////////////////////
+local M      = {}
 
-local function _reload_config()
-  package.loaded["config.keymaps"] = nil
-  require("config.keymaps")
-  vim.cmd("e!")
-  vim.notify("Reload!", vim.log.levels.INFO)
-  vim.cmd("normal! zz")
-end
-
-local function _format_indentation()
-  vim.lsp.buf.code_action({
-    context = { only = { "source.organizeImports" } },
-    apply = true,
-  })
-
-  vim.defer_fn(function()
-    local win = 0
-    local cursor = vim.api.nvim_win_get_cursor(win)
-
-    -- Use LSP formatter instead of ggVG=
-    vim.lsp.buf.format({ async = false })
-
-    vim.api.nvim_win_set_cursor(win, cursor)
-  end, 500)
-end
+-- ─────────────────────────────────────────────────────────────────────────────
+-- § 1  DEPENDENCIES & ALIASES
+-- ─────────────────────────────────────────────────────────────────────────────
+local map    = vim.keymap.set
+local api    = vim.api
+local fn     = vim.fn
+local lsp    = vim.lsp.buf
+local home   = vim.uv.os_homedir()
+local notify = vim.notify
 
 
-local function _read_file(path)
-  local expanded_path = vim.fn.expand(path)
-  local file = io.open(expanded_path, "r")
-  if not file then return nil end
-  local content = file:read("*a")
-  file:close()
+-- ─────────────────────────────────────────────────────────────────────────────
+-- § 2  UTILITIES  (pure helpers – no side-effects, fully reusable)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+local U = {}
+
+--- Read an entire file from disk.
+---@param path string  Accepts `~` and `$ENV` expansions.
+---@return string|nil
+function U.read_file(path)
+  local f = io.open(fn.expand(path), "r")
+  if not f then return nil end
+  local content = f:read("*a")
+  f:close()
   return content
 end
 
-local function _get_project_root()
-  local dir = vim.fn.getcwd()
+--- Walk up the directory tree and return the first ancestor that contains a
+--- git marker (.git dir or .gitignore).  Falls back to `cwd`.
+---@return string
+
+function U.project_root()
+  local dir     = fn.getcwd()
+
   local markers = { ".git", ".gitignore" }
+
   while dir ~= home and dir ~= "/" do
     for _, m in ipairs(markers) do
-      if vim.fn.isdirectory(dir .. "/" .. m) == 1 or vim.fn.filereadable(dir .. "/" .. m) == 1 then
+      local full = dir .. "/" .. m
+
+      if fn.isdirectory(full) == 1 or fn.filereadable(full) == 1 then
         return dir
       end
     end
-    dir = vim.fn.fnamemodify(dir, ":h")
+
+    dir = fn.fnamemodify(dir, ":h")
   end
-  return vim.fn.getcwd()
+
+  return fn.getcwd()
 end
 
---MAPPINGS
+--- Safely close a floating window.
 
-map('n', '<leader><leader>', function()
-  require('telescope.builtin').find_files({ cwd = _get_project_root() })
-end, { desc = 'Find Files' })
+---@param win integer
 
-map('n', '<leader>fg', function()
-  require('telescope.builtin').live_grep({ cwd = _get_project_root() })
-end, { desc = 'Find with GREP' })
-
-map('n', '<Tab>ml', function()
-  require('telescope.builtin').marks()
-end, { desc = 'List marks' })
-
-map('n', '<Tab>ma', function()
-  -- collect global marks (A-Z) only
-  local marks = vim.fn.getmarklist()
-  local used = {}
-  local lines = {}
-
-  for _, m in ipairs(marks) do
-    if m.mark:match("'[A-Z]") then
-      local letter = m.mark:sub(2, 2)
-      used[letter] = true
-      local file = m.file or '[no file]'
-      file = file:gsub(vim.env.HOME, '~')
-      table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
-    end
+function U.close_win(win)
+  if api.nvim_win_is_valid(win) then
+    api.nvim_win_close(win, true)
   end
+end
 
-  -- build header
-  table.insert(lines, 1, '  Used global marks (A-Z)')
-  table.insert(lines, 2, '  ' .. string.rep('─', 44))
-  table.insert(lines, '  ' .. string.rep('─', 44))
+--- Create a read-only scratch buffer pre-filled with `lines`.
 
-  if #lines == 2 then -- only header + separator = no marks yet
-    table.insert(lines, '  (none set)')
-  end
+---@param lines string[]
 
-  table.insert(lines, '  Press any A-Z to set — [ESC/q] = close')
+---@return integer buf
 
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
+function U.readonly_buf(lines)
+  local buf = api.nvim_create_buf(false, true)
 
-  local width = 58
-  local height = #lines
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = 'editor',
+  api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  api.nvim_set_option_value("modifiable", false, { buf = buf })
+
+  return buf
+end
+
+--- Open a centred floating window.
+---@param buf     integer
+---@param width   integer
+---@param height  integer
+---@param opts    table   Extra `nvim_open_win` overrides (title, footer, …).
+---@return integer win
+
+function U.float_win(buf, width, height, opts)
+  local base = {
+    relative = "editor",
     width    = width,
     height   = height,
     row      = math.floor((vim.o.lines - height) / 2),
     col      = math.floor((vim.o.columns - width) / 2),
-    style    = 'minimal',
-    border   = 'rounded',
-    title    = ' add mark ',
-    title_pos = 'center',
-  })
-  vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
+    style    = "minimal",
+    border   = "rounded",
+  }
 
-  local close = function()
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
-  end
+  local win = api.nvim_open_win(buf, true, vim.tbl_extend("force", base, opts or {}))
+  api.nvim_set_option_value("winhl", "Normal:Normal,FloatBorder:Comment", { win = win })
+  return win
+end
 
-  vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
-  vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
+--- Bind a close key (q / <Esc>) to a buffer-local function.
+---@param buf      integer
+---@param close_fn function
+function U.bind_close(buf, close_fn)
+  local o = { buffer = buf, nowait = true }
+  map("n", "q", close_fn, o)
+  map("n", "<Esc>", close_fn, o)
+end
 
-  -- bind A-Z directly: close window, then set the mark
-  for i = 65, 90 do  -- ASCII A=65 … Z=90
-    local letter = string.char(i)
-    vim.keymap.set('n', letter, function()
-      close()
-      vim.cmd('mark ' .. letter)
-      local status = used[letter] and ' (overwrote existing)' or ''
-      vim.notify('Global mark [' .. letter .. '] set' .. status, vim.log.levels.INFO)
-    end, { buffer = buf, nowait = true })
-  end
-end, { desc = 'Add Global Mark' })
-
-map('n', '<Tab>md', function()
-  local marks = vim.fn.getmarklist()
-  local lines = {}
-
-  -- 1. Filter for Global Marks (A-Z)
-  for _, m in ipairs(marks) do
-    if m.mark:match("^'[A-Z]$") then
-      local letter = m.mark:sub(2, 2)
-      local file = m.file or '[no file]'
-      file = file:gsub(vim.env.HOME, '~')
-      table.insert(lines, string.format('  %s  →  %s:%d', letter, file, m.pos[2]))
-    end
-  end
-
-  -- 2. UI Formatting
-  table.insert(lines, 1, '  Used global marks (A-Z)')
-  table.insert(lines, 2, '  ' .. string.rep('─', 44))
-
-  if #lines == 2 then
-    table.insert(lines, '  (none set)')
-  end
-
-  table.insert(lines, '  ' .. string.rep('─', 44))
-  table.insert(lines, '  [A-Z]  →  delete specific mark')
-  table.insert(lines, '  [0]    →  delete ALL marks (A-Z, a-z, 0-9)')
-
-  -- 3. Window Creation
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
-
-  local width = 58
-  local height = #lines
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative   = 'editor',
-    width      = width,
-    height     = height,
-    row        = math.floor((vim.o.lines - height) / 2),
-    col        = math.floor((vim.o.columns - width) / 2),
-    style      = 'minimal',
-    border     = 'rounded',
-    title      = ' delete mark ',
-    title_pos  = 'center',
-    footer     = ' [q] close ',
-    footer_pos = 'center',
-  })
-
-  vim.api.nvim_set_option_value('winhl', 'Normal:Normal,FloatBorder:Comment', { win = win })
-
-  local close = function()
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
-  end
-
-  -- 4. Keybindings
-  vim.keymap.set('n', 'q',     close, { buffer = buf, nowait = true })
-  vim.keymap.set('n', '<Esc>', close, { buffer = buf, nowait = true })
-
-  -- Updated: Delete ALL custom marks
-  vim.keymap.set('n', '0', function()
-    close()
-    vim.cmd('delmarks a-z A-Z 0-9')
-    vim.notify('All custom and history marks deleted', vim.log.levels.WARN)
-
-  end, { buffer = buf, nowait = true })
-
-  -- Delete specific global mark
+--- Bind every uppercase letter (A-Z) in a buffer.
+---@param buf      integer
+---@param callback fun(letter: string)
+function U.bind_az(buf, callback)
   for i = 65, 90 do
     local letter = string.char(i)
-    vim.keymap.set('n', letter, function()
-      close()
-      vim.cmd('delmarks ' .. letter)
-      vim.notify('Global mark [' .. letter .. '] deleted', vim.log.levels.INFO)
-    end, { buffer = buf, nowait = true })
+    map("n", letter, function() callback(letter) end,
+      { buffer = buf, nowait = true })
   end
-end, { desc = 'Delete Mark UI' })
-
--- 2. DELETING & YANKING
-map("n", "D", '"_ld$', { desc = "[D]elete until EOL" })
-map({ "n", "x" }, "d", '"_d', { noremap = true, silent = true, desc = "Delete without yanking" })
-map("n", "dd", '"_dd', { noremap = true, silent = true, desc = "Delete line without yanking" })
-map("n", "<Tab>y", "yiw", { noremap = true, silent = true, desc = "[y]ank" })
-map("n", "<Tab>c", '"_ciw', { noremap = true, silent = true, desc = "[c]hange" })
-map("n", "C", '"_ciw', { noremap = true, silent = true, desc = "[C]hange" })
-map({ "n", "t" }, "<Tab>p", '"_ciw<C-r>0<Esc>', { noremap = true, silent = true, desc = "[p]aste inside Word" })
-
-map("n", "<Tab>x", function()
-  vim.cmd("bd!")
-  vim.notify("Buffer closed")
-end, { noremap = true, silent = true, desc = "Close current buffer" })
-map("n", "<Tab>X", function()
-  local bufs = vim.fn.getbufinfo({ buflisted = 1 })
-  for _, buf in ipairs(bufs) do
-    vim.cmd("bd! " .. buf.bufnr)
-  end
-  vim.cmd("enew")
-  vim.cmd("Alpha")
-  vim.cmd("bd! #")
-  vim.notify("All buffers closed")
-end, { noremap = true, silent = true, desc = "Close all buffers" })
-
--- 3. MOVING AROUND
-map("n", "gg", "gg_", { noremap = true, silent = true })
-map("n", "G", "G_", { noremap = true, silent = true })
-map("n", "$", "$h", { noremap = true, silent = true })
-map({ "n", "v" }, "<Home>", "_", { noremap = true, silent = true })
-map("n", "<C-d>", "<Cmd>normal! <C-d>zz0<CR>", { noremap = true, silent = true })
-map("n", "<C-u>", "<Cmd>normal! <C-u>zz0<CR>", { noremap = true, silent = true })
-map({ "n", "v", "x" }, "<Up>", "<Up>zz", { noremap = true, silent = true })
-map({ "n", "v", "x" }, "<Down>", "<Down>zz", { noremap = true, silent = true })
-map("n", "<S-Up>", "<Up>0_zz", { noremap = true, silent = true })
-map("n", "<S-Down>", "<Down>0_zz", { noremap = true, silent = true })
-map("n", "<BS>", "_zz", { noremap = true, silent = true })
-map({ "n", "v" }, "k", "kzz", { noremap = true, silent = true })
-map({ "n", "v" }, "j", "jzz", { noremap = true, silent = true })
-map('n', '<Tab>b', '/[({\\[]<CR>', { noremap = true, silent = true, desc = "Next [b]racket" })
-map('n', '<Tab>B', '?[])}>]<CR>', { noremap = true, silent = true, desc = "Prev closing bracket" })
-map({ "n", "v" }, "<PageDown>", "<C-d>zz0", { desc = "Go half page down" })
-map({ "n", "v" }, "<PageUp>", "<C-u>zz0", { desc = "Go half page up" })
-
-map({"n"},"<Tab><Down>", function()
-  local half = math.floor(vim.fn.col("$") / 2)
-  vim.fn.cursor(0, half)
-  vim.cmd("normal! zz")
-end, { noremap = true, silent = true, desc = "Go to middle of line" })
-
-map({"n"},"<Tab>0", function()
-  local half = math.floor(vim.fn.col("$") / 2)
-  vim.fn.cursor(0, half)
-  vim.cmd("normal! zz")
-end, { noremap = true, silent = true, desc = "Go to middle of line" })
-
-map({ "n", "v" }, "<C-Right>", "e", { noremap = true, silent = true })
-map({ "n", "v" }, "<C-Left>", "b", { noremap = true, silent = true })
-map({ "n", "v" }, "<S-l>", "w", { noremap = true, silent = true })
-map({ "n", "v" }, "<S-h>", "b", { noremap = true, silent = true })
-map({ "n", "v" }, "<C-l>", "$", { noremap = true, silent = true })
-map({ "n", "v" }, "<C-h>", "_", { noremap = true, silent = true })
-
--- BUFFERS
-map("n", "<leader><Right>", "<Cmd>silent! bnext<CR>", { noremap = true, silent = true })
-map("n", "<leader><Left>", "<Cmd>silent! bprevious<CR>", { noremap = true, silent = true })
-
--- HEALTH BAR
-map("n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc="Open healthbar" })
-map("n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc="Close healthbar" })
-vim.keymap.set('n', '<Tab>hh', function()
-  vim.notify('HEAL!!')
-  vim.cmd('Healthbar reset')
-end, { desc = 'Heal healthbar' })
-
--- 4. INSERTING & EDITING
-map("n", "o", "o<Esc>zz", { noremap = true, silent = true })
-map("n", "O", "O<Esc>zz", { noremap = true, silent = true })
-map("n", "<S-a>", "a", { noremap = true, silent = true })
-
-local append_chars = { ",", ";", ":", "=" }
-for _, char in ipairs(append_chars) do
-  map("v", "<Tab>a" .. char, function()
-    vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false
-    )
-    local start_line  = vim.fn.line("'<")
-    local finish_line = vim.fn.line("'>")
-    for lnum = start_line, finish_line do
-      local line = vim.fn.getline(lnum)
-      vim.fn.setline(lnum, line .. char)
-    end
-  end, { noremap = true, silent = true, desc = "Append [" .. char .. "] to block" })
 end
 
--- 5. `'[{("SURROUND")}]'` WITH SYMBOLS
-local delimiters = { ["{"] = "}", ["("] = ")", ["["] = "]", ["q"] = '"', ["s"] = "'", ["b"] = "`" }
-for trigger, target in pairs(delimiters) do
-  map("x", "<leader>z" .. trigger, "gsa" .. target .. "h", { remap = true, silent = true, desc = "with " .. target })
+-- ─────────────────────────────────────────────────────────────────────────────
+-- § 3  DOMAIN SERVICES  (business logic, grouped by concern)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- ── 3a  LSP / FORMAT ─────────────────────────────────────────────────────────
+
+local LSP = {}
+
+--- Organise imports then LSP-format.
+--- Code-action is async; formatting is deferred so both run in the right order.
+---@param delay_ms? integer  Default 500 ms.
+
+function LSP.format_file(delay_ms)
+  lsp.code_action({
+    context = { only = { "source.organizeImports" } },
+    apply   = true,
+  })
+  vim.defer_fn(function()
+    local cursor = api.nvim_win_get_cursor(0)
+    lsp.format({ async = false })
+    api.nvim_win_set_cursor(0, cursor)
+  end, delay_ms or 500)
 end
 
--- 6. TAB RULES
-map({ "n" }, "<Tab>k", function()
+--- Open LSP code-actions then run a full format pass.
+
+function LSP.actions_and_format()
   vim.cmd("e!")
-  vim.lsp.buf.code_action()
-  _format_indentation()
-  vim.notify('Organise!!', vim.log.levels.INFO)
-end, { noremap = true, silent = true, desc = "LSP Actions" })
 
-map({ "n", "v" }, "<Tab><Right>", "$", { noremap = true, silent = true, desc = "Go right" })
-map({ "n", "v" }, "<Tab><Left>", "_", { noremap = true, silent = true, desc = "Go left" })
-map({ "n", "v" }, "<Tab><Up>", "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go up" })
-map("n", "<Tab>f", _format_indentation , { noremap = true, silent = true, desc = "Format File" })
-map("n", "<leader>m", "<Cmd>Mason<CR>", { noremap = true, silent = true })
-map("n", "<leader>M", "<Cmd>LazyExtras<CR>", { noremap = true, silent = true })
+  lsp.code_action()
+
+  LSP.format_file()
+
+  notify("Organise!!", vim.log.levels.INFO)
+end
+
+-- ── 3b  CONFIG ───────────────────────────────────────────────────────────────
 
 
-vim.keymap.set("n", "<F5>", _reload_config, {desc = "Reload!"})
 
--- map("n", "<F5>", function()
---   package.loaded["config.keymaps"] = nil
---   require("config.keymaps")
---   vim.cmd("e!")
---   vim.notify("Reload!", vim.log.levels.INFO)
---   vim.cmd("normal! zz")
--- end, { desc = "Reload!" })
+local Config = {}
 
-map("n", "<leader>r", function()
-  local win = 0
-  local cursor = vim.api.nvim_win_get_cursor(win)
-  local word = vim.fn.expand("<cword>")
-  local new_word = vim.fn.input("Replace '" .. word .. "' with: ")
+
+
+--- Hot-reload keymaps without restarting Neovim.
+
+function Config.reload()
+  package.loaded["config.keymaps"] = nil
+
+  require("config.keymaps")
+
+  vim.cmd("e!")
+
+  notify("Reload!", vim.log.levels.INFO)
+
+  vim.cmd("normal! zz")
+end
+
+-- ── 3c  BUFFERS ───────────────────────────────────────────────────────────────
+
+
+
+local Buf = {}
+
+
+
+--- Close the current buffer.
+
+function Buf.close_current()
+  vim.cmd("bd!")
+
+  notify("Buffer closed")
+end
+
+--- Close every listed buffer and open the dashboard.
+
+function Buf.close_all()
+  for _, b in ipairs(fn.getbufinfo({ buflisted = 1 })) do
+    vim.cmd("bd! " .. b.bufnr)
+  end
+
+  vim.cmd("enew")
+
+  vim.cmd("Alpha")
+
+  vim.cmd("bd! #")
+
+  notify("All buffers closed")
+end
+
+-- ── 3d  MARKS ────────────────────────────────────────────────────────────────
+
+
+
+local Marks = {}
+
+
+
+--- Collect global marks (A-Z) from the global mark list.
+
+---@return { letter:string, file:string, line:integer }[]
+
+local function _global_marks()
+  local out = {}
+
+  for _, m in ipairs(fn.getmarklist()) do
+    if m.mark:match("^'[A-Z]$") then
+      table.insert(out, {
+
+        letter = m.mark:sub(2, 2),
+
+        file   = (m.file or "[no file]"):gsub(vim.env.HOME, "~"),
+
+        line   = m.pos[2],
+
+      })
+    end
+  end
+
+  return out
+end
+
+
+
+--- Build display lines for a marks popup.
+
+---@param marks { letter:string, file:string, line:integer }[]
+
+---@param footer string
+
+---@return string[], table<string,boolean>
+
+local function _marks_lines(marks, footer)
+  local used  = {}
+
+  local lines = { "  Used global marks (A-Z)", "  " .. string.rep("─", 44) }
+
+  for _, m in ipairs(marks) do
+    used[m.letter] = true
+
+    table.insert(lines, string.format("  %s  →  %s:%d", m.letter, m.file, m.line))
+  end
+
+  if #lines == 2 then
+    table.insert(lines, "  (none set)")
+  end
+
+  table.insert(lines, "  " .. string.rep("─", 44))
+
+  table.insert(lines, footer)
+
+  return lines, used
+end
+
+
+
+--- Show the "add global mark" floating UI.
+
+function Marks.add()
+  local marks       = _global_marks()
+
+  local footer      = "  Press any A-Z to set — [ESC/q] = close"
+
+  local lines, used = _marks_lines(marks, footer)
+
+  local buf         = U.readonly_buf(lines)
+
+  local win         = U.float_win(buf, 58, #lines, {
+
+    title     = " add mark ",
+
+    title_pos = "center",
+
+  })
+
+  local close       = function() U.close_win(win) end
+
+  U.bind_close(buf, close)
+
+  U.bind_az(buf, function(letter)
+    close()
+
+    vim.cmd("mark " .. letter)
+
+    local suffix = used[letter] and " (overwrote existing)" or ""
+
+    notify("Global mark [" .. letter .. "] set" .. suffix, vim.log.levels.INFO)
+  end)
+end
+
+--- Show the "delete global mark" floating UI.
+
+function Marks.delete()
+  local marks       = _global_marks()
+
+  local footer_hint = "  [A-Z] → delete specific   [0] → delete ALL"
+
+  local lines, _    = _marks_lines(marks, footer_hint)
+
+  local buf         = U.readonly_buf(lines)
+
+  local win         = U.float_win(buf, 58, #lines, {
+
+    title      = " delete mark ",
+
+    title_pos  = "center",
+
+    footer     = " [q] close ",
+
+    footer_pos = "center",
+
+  })
+
+  local close       = function() U.close_win(win) end
+
+  U.bind_close(buf, close)
+
+  map("n", "0", function()
+    close()
+
+    vim.cmd("delmarks a-z A-Z 0-9")
+
+    notify("All custom and history marks deleted", vim.log.levels.WARN)
+  end, { buffer = buf, nowait = true })
+
+  U.bind_az(buf, function(letter)
+    close()
+
+    vim.cmd("delmarks " .. letter)
+
+    notify("Global mark [" .. letter .. "] deleted", vim.log.levels.INFO)
+  end)
+end
+
+--- List all global marks via Telescope.
+
+function Marks.list()
+  require("telescope.builtin").marks()
+end
+
+-- ── 3e  EDITOR UTILITIES ─────────────────────────────────────────────────────
+
+
+
+local Editor = {}
+
+
+
+--- Project-aware Telescope file picker.
+
+function Editor.find_files()
+  require("telescope.builtin").find_files({ cwd = U.project_root() })
+end
+
+--- Project-aware Telescope live-grep.
+
+function Editor.live_grep()
+  require("telescope.builtin").live_grep({ cwd = U.project_root() })
+end
+
+--- Replace the word under the cursor across the whole buffer.
+
+function Editor.replace_word()
+  local cursor   = api.nvim_win_get_cursor(0)
+
+  local word     = fn.expand("<cword>")
+
+  local new_word = fn.input("Replace '" .. word .. "' with: ")
+
   if new_word ~= "" then
-    local count = vim.fn.searchcount({ pattern = word, recompute = true }).total
+    local count = fn.searchcount({ pattern = word, recompute = true }).total
+
     vim.cmd(string.format("%%s/%s/%s/g", word, new_word))
+
     print(count .. " instances replaced")
   end
-  vim.api.nvim_win_set_cursor(win, cursor)
+
+  api.nvim_win_set_cursor(0, cursor)
+
   vim.cmd("normal! zz")
-end, { desc = "Replace word" })
+end
 
+--- Copy a Python relative import path for the word under the cursor.
 
-map("n", "<leader>p", function()
-  local current_word = vim.fn.expand("<cword>")
-  local dir = vim.fn.expand("%:.")
+function Editor.copy_python_import()
+  local word      = fn.expand("<cword>")
+
+  local dir       = fn.expand("%:.")
+
   local formatted = dir:gsub("/", "."):gsub("%.py$", "")
-  local output = "from " .. formatted .. " import " .. current_word
-  vim.fn.setreg("0", output)
-  vim.fn.setreg("+", output)
-  vim.notify("Relative path copied to clipboard", vim.log.levels.INFO)
-end, { noremap = true, silent = true })
 
-map("n", "<Tab>.", function()
+  local output    = "from " .. formatted .. " import " .. word
+
+  fn.setreg("0", output)
+
+  fn.setreg("+", output)
+
+  notify("Relative path copied to clipboard", vim.log.levels.INFO)
+end
+
+--- Insert a Python `print(f"var={var}")` debug line above the cursor.
+
+function Editor.insert_python_print()
+  local var = fn.input("(Python) Print: ")
+
+  if var == "" then return end
+
+  local row    = unpack(api.nvim_win_get_cursor(0))
+
+  local indent = api.nvim_get_current_line():match("^%s*") or ""
+
+  local line   = indent .. string.format('print(f"%s={%s}")', var, var)
+
+  if api.nvim_get_mode().mode:match("^i") then
+    api.nvim_feedkeys(api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+  end
+
+  api.nvim_buf_set_text(0, row - 1, 0, row - 1, 0, { line })
+end
+
+--- Jump the cursor to the horizontal middle of the current line.
+
+function Editor.goto_line_middle()
+  fn.cursor(0, math.floor(fn.col("$") / 2))
+
+  vim.cmd("normal! zz")
+end
+
+--- Open the keymaps file for editing.
+
+function Editor.edit_keymaps()
   vim.cmd("edit $HOME/.config/nvim/lua/config/keymaps.lua")
-  vim.notify("Edit Keymaps!")
-end, {
-    desc = "Edit keymaps file",
-    noremap = true,
-  })
 
-map({ "n", "i" }, "<F1>", function()
-  local var = vim.fn.input("(Python) Print: ")
-  if var == "" then
-    return
+  notify("Edit Keymaps!")
+end
+
+-- ── 3f  LLM TOOL ─────────────────────────────────────────────────────────────
+
+
+
+local LLM         = {}
+local PROMPT_PATH = "$HOME/.config/nvim/scripts/system_prompt.txt"
+local SCRIPT_PATH = "$HOME/.config/nvim/scripts/llm-tool.sh"
+local CONVO_DIR   = "$HOME/conversations/"
+local DEFAULT_SYS = "IMPORTANT: Your response must always be in English language."
+
+--- Save floating-window buffer to disk with a timestamped filename.
+---@param buf integer
+local function _save_conversation(buf)
+  local dir = fn.expand(CONVO_DIR)
+
+  if fn.isdirectory(dir) == 0 then fn.mkdir(dir, "p") end
+
+  local file = io.open(dir .. "conversation_" .. os.date("%Y%m%d_%H%M%S") .. ".txt", "w")
+
+  if file then
+    file:write(table.concat(api.nvim_buf_get_lines(buf, 0, -1, false), "\n"))
+
+    file:close()
+
+    notify("Conversation saved → " .. dir, vim.log.levels.INFO)
   end
-  local row = unpack(vim.api.nvim_win_get_cursor(0))
-  local current_line = vim.api.nvim_get_current_line()
-  local indent = current_line:match("^%s*") or ""
-  local line = indent .. string.format('print(f"%s={%s}")', var, var)
-  if vim.api.nvim_get_mode().mode:match("^i") then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-  end
-  vim.api.nvim_buf_set_text(0, row - 1, 0, row - 1, 0, { line })
-end)
+end
 
--- TERMINAL
-map({ "n", "i", "t" }, "<F6>", "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true })
 
-map({ "n", "i", "t" }, "<F4>", function()
-  local mode = vim.fn.mode()
-  if mode == "i" then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-  elseif mode == "t" then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", true)
-  end
-  vim.cmd("bd!")
-end, { noremap = true, silent = true })
 
-map({ "n", "i", "t" }, "<F12>", function()
-  local mode = vim.fn.mode()
-  if mode == "i" then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-  elseif mode == "t" then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", true)
-  end
-  vim.cmd("bd!")
-end, { noremap = true, silent = true })
+--- Run the external LLM shell script on the visually selected text.
 
-map({ "n", "t" }, "<C-Up>", [[<C-\><C-n><C-w>k]], { desc = "Move Up", remap = false })
-map({ "n", "t" }, "<C-Down>", [[<C-\><C-n><C-w>j]], { desc = "Move Down", remap = false })
-
--- LLM TOOL
-map("v", "<Tab>m", function()
-  -- 1. Get the selected text
+function LLM.run()
   vim.cmd('noau normal! "vy')
-  local selected_text = vim.fn.getreg("v")
 
-  -- 2. Ask the human for their instruction
-  local user_prompt = vim.fn.input("Prompt: ")
+  local selected = fn.getreg("v")
+
+
+
+  local user_prompt = fn.input("Prompt: ")
+
   if user_prompt == "" then
-    vim.notify("llm tool cancelled", vim.log.levels.WARN)
+    notify("llm tool cancelled", vim.log.levels.WARN)
+
     return
   end
 
-  -- Language constraint injected at the top of the payload
-  -- 3. Load System Prompt from External File
-  local prompt_path = "$HOME/.config/nvim/scripts/system_prompt.txt"
-  local llm_tool_path = "$HOME/.config/nvim/scripts/llm-tool.sh"
 
-  local system_prompt = _read_file(prompt_path) or "IMPORTANT: Your response must always be in English language."
-  local full_payload = system_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected_text
-  local script_path = vim.fn.expand(llm_tool_path)
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
 
-  -- Calculate window size
-  local width = math.floor(vim.o.columns * 0.8)
-  local height = math.floor(vim.o.lines * 0.8)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
+  local sys_prompt = U.read_file(PROMPT_PATH) or DEFAULT_SYS
 
-  local placeholder = "thinking..."
-  local pad_top = math.floor(height / 2)
-  local pad_left = math.floor((width - #placeholder) / 2)
-  local lines = {}
-  for _ = 1, pad_top do table.insert(lines, "") end
-  table.insert(lines, string.rep(" ", pad_left) .. placeholder)
+  local payload    = sys_prompt .. user_prompt .. "\n\nCONTEXT/CODE:\n" .. selected
 
-  -- Open the window
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = "minimal",
-    border = "rounded",
-    footer = " [q] quit ",
+  local script     = fn.expand(SCRIPT_PATH)
+
+
+
+  -- Build the "thinking…" placeholder centred in the window
+
+  local width, height = math.floor(vim.o.columns * 0.8), math.floor(vim.o.lines * 0.8)
+
+  local placeholder   = "thinking..."
+
+  local pad_lines     = {}
+
+  for _ = 1, math.floor(height / 2) do table.insert(pad_lines, "") end
+
+  table.insert(pad_lines, string.rep(" ", math.floor((width - #placeholder) / 2)) .. placeholder)
+
+
+
+  local buf = api.nvim_create_buf(false, true)
+
+  api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+
+  api.nvim_buf_set_lines(buf, 0, -1, false, pad_lines)
+
+
+
+  local win = U.float_win(buf, width, height, {
+
+    footer     = " [q] quit ",
+
     footer_pos = "center",
+
   })
 
-  -- Enable line numbers in the floating window
-  vim.api.nvim_set_option_value("number",         true, { win = win })
-  vim.api.nvim_set_option_value("relativenumber", true, { win = win })
-  vim.api.nvim_set_option_value("numberwidth",    4,    { win = win })
-  vim.api.nvim_set_option_value("wrap",           true, { win = win })
+  for opt, val in pairs({ number = true, relativenumber = true, numberwidth = 4, wrap = true }) do
+    api.nvim_set_option_value(opt, val, { win = win })
+  end
 
   vim.wo.wrap = true
 
-  -- 4. SAVE AND QUIT LISTENER (The 'q' key)
-  vim.keymap.set("n", "q", function()
-    local content_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    local content = table.concat(content_lines, "\n")
-    local dir = vim.fn.expand("$HOME/conversations/")
 
-    if vim.fn.isdirectory(dir) == 0 then vim.fn.mkdir(dir, "p") end
 
-    local timestamp = os.date("%Y%m%d_%H%M%S")
-    local filename = dir .. "conversation_" .. timestamp .. ".txt"
+  -- q → save and close
 
-    local file = io.open(filename, "w")
-    if file then
-      file:write(content)
-      file:close()
-      -- Use a simple print or notify
-      vim.notify("Saved: " .. filename, vim.log.levels.INFO)
-    end
+  map("n", "q", function()
+    _save_conversation(buf)
 
-    -- Cleanup: Close window and wipe buffer
-    vim.api.nvim_win_close(win, true)
-    vim.api.nvim_buf_delete(buf, { force = true })
+    U.close_win(win)
+
+    api.nvim_buf_delete(buf, { force = true })
   end, { buffer = buf, silent = true })
 
-  -- 3. Execute the script
-  vim.fn.jobstart({ script_path, full_payload }, {
+
+
+  fn.jobstart({ script, payload }, {
+
     stdout_buffered = true,
+
     on_stdout = function(_, data)
       if data and #data > 0 and data[1] ~= "" then
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, data)
+        api.nvim_buf_set_lines(buf, 0, -1, false, data)
       end
     end,
+
     on_stderr = function(_, data)
       if data and #data > 1 then
-        vim.notify("Error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+        notify("LLM error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
       end
     end,
+
   })
-end, { desc = "ll[m] tool", silent = true })
-
-
--- 8. DEAD KEYS
-local modes = { "n", "i", "v", "x", "s", "o", "t", "c" }
-for _, mode in ipairs(modes) do
-  map(mode, "<C-W><Up>", "<NOP>", { noremap = true, silent = true })
-  map(mode, "<C-W><Down>", "<NOP>", { noremap = true, silent = true })
 end
-map({ "i", "n", "v", "c" }, "<Insert>", "<Nop>", { noremap = true, silent = true })
-map({"n", "v"}, ".", "<Nop>", { noremap = true, silent = true })
-map({ "n", "i", "v", "x", "o", "c", "t" }, "<C-/>", "<Nop>", { noremap = true, silent = true })
-map("n", "Q", "<Nop>", { noremap = true })
-map("n", "q", "<Nop>", { noremap = true })
-map("n", "<C-q>", "<Nop>", { noremap = true })
-map("n", "@", "<Nop>", { noremap = true })
-map("n", "@@", "<Nop>", { noremap = true })
-map("n", "<C-S-Up>", "<Nop>", { noremap = true, silent = true })
-map("n", "<C-S-Down>", "<Nop>", { noremap = true, silent = true })
-map({ "n", "v" }, "<C-S-Right>", "<Nop>", { noremap = true, silent = true })
-map({ "n", "v" }, "<C-S-Left>", "<Nop>", { noremap = true, silent = true })
-map({ "n", "v" }, "H", "<Nop>")
-map({ "n", "v" }, "J", "<Nop>")
-map({ "n", "v" }, "K", "<Nop>")
-map({ "n", "v" }, "L", "<Nop>")
-map({ "n", "v" }, "Y", "<Nop>")
-map({ "n", "v" }, "P", "<Nop>")
--- END OF FILE
+
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- § 4  KEYMAP REGISTRY  (data-driven — no logic here, only declarations)
+
+-- ─────────────────────────────────────────────────────────────────────────────
+
+
+
+-- Each entry: { modes, lhs, rhs, opts }
+
+-- `rhs` may be a string (passed straight to `map`) or a function.
+
+
+
+local MAPS = {
+
+
+
+  -- ── SEARCH / FILES ──────────────────────────────────────────────────────
+
+  { "n",               "<leader><leader>", Editor.find_files,              { desc = "Find Files" } },
+
+  { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find with GREP" } },
+
+
+
+  -- ── MARKS ───────────────────────────────────────────────────────────────
+
+  { "n",               "<Tab>ml",          Marks.list,                     { desc = "List marks" } },
+
+  { "n",               "<Tab>ma",          Marks.add,                      { desc = "Add Global Mark" } },
+
+  { "n",               "<Tab>md",          Marks.delete,                   { desc = "Delete Mark UI" } },
+
+
+
+  -- ── DELETE / YANK ────────────────────────────────────────────────────────
+
+  { "n",               "D",                '"_ld$',                        { desc = "Delete until EOL" } },
+
+  { { "n", "x" },      "d",                '"_d',                          { noremap = true, silent = true, desc = "Delete without yanking" } },
+
+  { "n",               "dd",               '"_dd',                         { noremap = true, silent = true, desc = "Delete line without yanking" } },
+
+  { "n",               "<Tab>y",           "yiw",                          { noremap = true, silent = true, desc = "Yank word" } },
+
+  { "n",               "<Tab>c",           '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
+
+  { "n",               "C",                '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
+
+  { { "n", "t" },      "<Tab>p",           '"_ciw<C-r>0<Esc>',             { noremap = true, silent = true, desc = "Paste inside word" } },
+
+
+
+  -- ── BUFFERS ──────────────────────────────────────────────────────────────
+
+  { "n",               "<Tab>x",           Buf.close_current,              { noremap = true, silent = true, desc = "Close current buffer" } },
+
+  { "n",               "<Tab>X",           Buf.close_all,                  { noremap = true, silent = true, desc = "Close all buffers" } },
+
+  { "n",               "<leader><Right>",  "<Cmd>silent! bnext<CR>",       { noremap = true, silent = true } },
+
+  { "n",               "<leader><Left>",   "<Cmd>silent! bprevious<CR>",   { noremap = true, silent = true } },
+
+
+
+  -- ── MOTION ───────────────────────────────────────────────────────────────
+
+  { "n",               "gg",               "gg_",                          { noremap = true, silent = true } },
+
+  { "n",               "G",                "G_",                           { noremap = true, silent = true } },
+
+  { "n",               "$",                "$h",                           { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<Home>",           "_",                            { noremap = true, silent = true } },
+
+  { "n",               "<C-d>",            "<Cmd>normal! <C-d>zz0<CR>",    { noremap = true, silent = true } },
+
+  { "n",               "<C-u>",            "<Cmd>normal! <C-u>zz0<CR>",    { noremap = true, silent = true } },
+
+  { { "n", "v", "x" }, "<Up>",             "<Up>zz",                       { noremap = true, silent = true } },
+
+  { { "n", "v", "x" }, "<Down>",           "<Down>zz",                     { noremap = true, silent = true } },
+
+  { "n",               "<S-Up>",           "<Up>0_zz",                     { noremap = true, silent = true } },
+
+  { "n",               "<S-Down>",         "<Down>0_zz",                   { noremap = true, silent = true } },
+
+  { "n",               "<BS>",             "_zz",                          { noremap = true, silent = true } },
+
+  { { "n", "v" },      "k",                "kzz",                          { noremap = true, silent = true } },
+
+  { { "n", "v" },      "j",                "jzz",                          { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<PageDown>",       "<C-d>zz0",                     { desc = "Half page down" } },
+
+  { { "n", "v" },      "<PageUp>",         "<C-u>zz0",                     { desc = "Half page up" } },
+
+  { "n",               "<Tab><Down>",      Editor.goto_line_middle,        { noremap = true, silent = true, desc = "Middle of line" } },
+
+  { "n",               "<Tab>0",           Editor.goto_line_middle,        { noremap = true, silent = true, desc = "Middle of line" } },
+
+  { { "n", "v" },      "<C-Right>",        "e",                            { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<C-Left>",         "b",                            { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<S-l>",            "w",                            { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<S-h>",            "b",                            { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<C-l>",            "$",                            { noremap = true, silent = true } },
+
+  { { "n", "v" },      "<C-h>",            "_",                            { noremap = true, silent = true } },
+
+  { "n",               "<Tab><Right>",     "$",                            { noremap = true, silent = true, desc = "Go right" } },
+
+  { { "n", "v" },      "<Tab><Left>",      "_",                            { noremap = true, silent = true, desc = "Go left" } },
+
+  { { "n", "v" },      "<Tab><Up>",        "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go top" } },
+
+  { "n",               "<Tab>b",           "/[({\\[]<CR>",                 { noremap = true, silent = true, desc = "Next bracket" } },
+
+  { "n",               "<Tab>B",           "?[])}>]<CR>",                  { noremap = true, silent = true, desc = "Prev bracket" } },
+
+
+
+  -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
+
+  { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
+
+  { "n",               "<Tab>k",           LSP.actions_and_format,         { noremap = true, silent = true, desc = "LSP actions + format" } },
+
+
+
+  -- ── HEALTH BAR ───────────────────────────────────────────────────────────
+
+  { "n",               "<Tab>ho",          ":Healthbar open<CR>",          { noremap = true, silent = true, desc = "Open healthbar" } },
+
+  { "n",               "<Tab>hc",          ":Healthbar close<CR>",         { noremap = true, silent = true, desc = "Close healthbar" } },
+
+  { "n", "<Tab>hh", function()
+    notify("HEAL!!")
+
+    vim.cmd("Healthbar reset")
+  end, { desc = "Heal healthbar" } },
+
+
+
+  -- ── INSERT / EDIT ─────────────────────────────────────────────────────────
+
+  { "n",               "o",         "o<Esc>zz",                              { noremap = true, silent = true } },
+
+  { "n",               "O",         "O<Esc>zz",                              { noremap = true, silent = true } },
+
+  { "n",               "<S-a>",     "a",                                     { noremap = true, silent = true } },
+
+
+
+  -- ── REPLACE / PATHS ──────────────────────────────────────────────────────
+
+  { "n",               "<leader>r", Editor.replace_word,                     { desc = "Replace word" } },
+
+  { "n",               "<leader>p", Editor.copy_python_import,               { noremap = true, silent = true } },
+
+
+
+  -- ── CONFIG ────────────────────────────────────────────────────────────────
+
+  { "n",               "<F5>",      Config.reload,                           { desc = "Reload keymaps" } },
+
+  { "n",               "<Tab>.",    Editor.edit_keymaps,                     { noremap = true, desc = "Edit keymaps file" } },
+
+  { "n",               "<leader>m", "<Cmd>Mason<CR>",                        { noremap = true, silent = true } },
+
+  { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                   { noremap = true, silent = true } },
+
+
+
+  -- ── TERMINAL ──────────────────────────────────────────────────────────────
+
+  { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true } },
+
+
+
+  -- ── LLM TOOL ─────────────────────────────────────────────────────────────
+
+  { "v",               "<Tab>m",    LLM.run,                                 { silent = true, desc = "LLM tool" } },
+
+
+
+  -- ── DEBUG ─────────────────────────────────────────────────────────────────
+
+  { { "n", "i" },      "<F1>",      Editor.insert_python_print,              {} },
+
+}
+
+
+
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- § 5  PARAMETRIC MAP GROUPS  (loops that generate multiple mappings)
+
+-- ─────────────────────────────────────────────────────────────────────────────
+
+
+
+--- Append a character to the end of every line in a visual selection.
+
+---@param char string
+
+local function _make_append_handler(char)
+  return function()
+    api.nvim_feedkeys(
+
+      api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false
+
+    )
+
+    for lnum = fn.line("'<"), fn.line("'>") do
+      fn.setline(lnum, fn.getline(lnum) .. char)
+    end
+  end
+end
+
+
+
+local function _register_parametric_maps()
+  -- Visual append: <Tab>a, <Tab>a; etc.
+
+  for _, char in ipairs({ ",", ";", ":", "=" }) do
+    map("v", "<Tab>a" .. char,
+
+      _make_append_handler(char),
+
+      { noremap = true, silent = true, desc = "Append [" .. char .. "] to block" })
+  end
+
+
+
+  -- Surround: <leader>z{ wraps selection with }  etc.
+
+  local delimiters = {
+
+    ["{"] = "}",
+    ["("] = ")",
+    ["["] = "]",
+
+    ["q"] = '"',
+    ["s"] = "'",
+    ["b"] = "`",
+
+  }
+
+  for trigger, target in pairs(delimiters) do
+    map("x", "<leader>z" .. trigger,
+
+      "gsa" .. target .. "h",
+
+      { remap = true, silent = true, desc = "Surround with " .. target })
+  end
+
+
+
+  -- Terminal close: F4 / F12 — escape insert/terminal modes then :bd!
+
+  local function _term_close()
+    local mode = fn.mode()
+
+    if mode == "i" then
+      api.nvim_feedkeys(api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+    elseif mode == "t" then
+      api.nvim_feedkeys(api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", true)
+    end
+
+    vim.cmd("bd!")
+  end
+
+  for _, key in ipairs({ "<F4>", "<F12>" }) do
+    map({ "n", "i", "t" }, key, _term_close, { noremap = true, silent = true })
+  end
+
+
+
+  -- Window navigation from terminal
+
+  map({ "n", "t" }, "<C-Up>", [[<C-\><C-n><C-w>k]], { desc = "Move Up" })
+  map({ "n", "t" }, "<C-Down>", [[<C-\><C-n><C-w>j]], { desc = "Move Down" })
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- § 6  DEAD KEYS  (intentional no-ops)
+-- ─────────────────────────────────────────────────────────────────────────────
+local function _register_dead_keys()
+  -- Suppress accidental resize chords in every mode
+  local all_modes = { "n", "i", "v", "x", "s", "o", "t", "c" }
+  for _, mode in ipairs(all_modes) do
+    map(mode, "<C-W><Up>", "<NOP>", { noremap = true, silent = true })
+    map(mode, "<C-W><Down>", "<NOP>", { noremap = true, silent = true })
+  end
+
+  -- Single-mode no-ops
+  local nops = {
+    { { "i", "n", "v", "c" },                "<Insert>" },
+    { { "n", "v" },                          "." },
+    { { "n", "i", "v", "x", "o", "c", "t" }, "<C-/>" },
+    { "n",                                   "Q" },
+    { "n",                                   "q" },
+    { "n",                                   "<C-q>" },
+    { "n",                                   "@" },
+    { "n",                                   "@@" },
+    { "n",                                   "<C-S-Up>" },
+    { "n",                                   "<C-S-Down>" },
+    { { "n", "v" },                          "<C-S-Right>" },
+    { { "n", "v" },                          "<C-S-Left>" },
+    { { "n", "v" },                          "H" },
+    { { "n", "v" },                          "J" },
+    { { "n", "v" },                          "K" },
+    { { "n", "v" },                          "L" },
+    { { "n", "v" },                          "Y" },
+    { { "n", "v" },                          "P" },
+  }
+
+  for _, entry in ipairs(nops) do
+    map(entry[1], entry[2], "<Nop>", { noremap = true, silent = true })
+  end
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- § 7  BOOTSTRAP  (single entry-point; apply everything)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+function M.setup()
+  -- Apply the static registry
+  for _, entry in ipairs(MAPS) do
+    local modes, lhs, rhs, opts = entry[1], entry[2], entry[3], entry[4]
+    map(modes, lhs, rhs, opts)
+  end
+
+  _register_parametric_maps()
+  _register_dead_keys()
+end
+
+M.setup()
+
+
+
+return M
