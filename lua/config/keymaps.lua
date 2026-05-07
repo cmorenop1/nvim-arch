@@ -148,6 +148,7 @@ function LSP.format_file(delay_ms)
     lsp.format({ async = false })
     api.nvim_win_set_cursor(0, cursor)
   end, delay_ms or 500)
+  notify("Format!!", vim.log.levels.INFO)
 end
 
 --- Open LSP code-actions then run a full format pass.
@@ -683,12 +684,8 @@ local MAPS = {
 
 
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
-
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
-
   { "n",               "<Tab>k",           LSP.actions_and_format,         { noremap = true, silent = true, desc = "LSP actions + format" } },
-
-
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
 
