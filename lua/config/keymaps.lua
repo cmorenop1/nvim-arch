@@ -7,16 +7,9 @@ local home = vim.uv.os_homedir()
 --///////////////////////////////////////
 
 local function _reload_config()
-  -- 1. Unload the module from the Lua cache
   package.loaded["config.keymaps"] = nil
-
-  -- 2. Re-require the file to apply changes
   require("config.keymaps")
-
-  -- 3. Force reload the current buffer to reflect any external changes
   vim.cmd("e!")
-
-  -- 4. Provide visual feedback and center the cursor
   vim.notify("Reload!", vim.log.levels.INFO)
   vim.cmd("normal! zz")
 end
@@ -33,8 +26,8 @@ local function _organise_imports()
   })
 
   vim.api.nvim_win_set_cursor(win, cursor)
+  vim.cmd("e!")
   vim.cmd("normal! zz")
-  -- _reload_config()
 end
 
 local function _read_file(path)
@@ -322,8 +315,9 @@ end
 -- 6. TAB RULES
 map({ "n" }, "<Tab>k", function()
   vim.lsp.buf.code_action()
+  vim.cmd("e!")
   _organise_imports()
-  _reload_config()
+  -- _reload_config()
   vim.notify('Organise!!', vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
