@@ -314,10 +314,9 @@ end
 
 -- 6. TAB RULES
 map({ "n" }, "<Tab>k", function()
-  vim.lsp.buf.code_action()
   vim.cmd("e!")
+  vim.lsp.buf.code_action()
   _organise_imports()
-  -- _reload_config()
   vim.notify('Organise!!', vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "LSP Actions" })
 
