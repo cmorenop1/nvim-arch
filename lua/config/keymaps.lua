@@ -640,7 +640,7 @@ local MAPS = {
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
   { "n",               "<Tab>k",           LSP.actions_and_format,         { noremap = true, silent = true, desc = "LSP actions + format" } },
-  { "n",               "<Tab>d",           LSP.go_to_definition,           { noremap = true, silent = true, desc = "LSP Definition" } },
+  { "n",               "<Tab>g",           LSP.go_to_definition,           { noremap = true, silent = true, desc = "LSP Definition" } },
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
   { "n",               "<Tab>ho",          ":Healthbar open<CR>",          { noremap = true, silent = true, desc = "Open healthbar" } },
