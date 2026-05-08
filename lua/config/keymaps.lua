@@ -164,7 +164,7 @@ end
 function LSP.go_to_definition()
   vim.cmd("e!")
   vim.lsp.buf.definition()
-  vim.notify("Definition!!", vim.log.levels.INFO)
+  vim.notify("GO!!", vim.log.levels.INFO)
   -- Wait 1 second, then center
   vim.defer_fn(function()
     vim.cmd("normal! zz")
