@@ -635,7 +635,7 @@ local MAPS = {
   { { "n", "v" },      "<Tab><Left>",      "_",                            { noremap = true, silent = true, desc = "Go left" } },
   { { "n", "v" },      "<Tab><Up>",        "<Cmd>0<CR><Cmd>normal! _<CR>", { noremap = true, silent = true, desc = "Go top" } },
   { "n",               "<Tab>b",           "/[({\\[]<CR>",                 { noremap = true, silent = true, desc = "Next bracket" } },
-  { "n",               "<Tab>B",           "?[])}>]<CR>",                  { noremap = true, silent = true, desc = "Prev bracket" } },
+  { "n",               "<Tab>B",           "?[])}]<CR>",                   { noremap = true, silent = true, desc = "Prev bracket" } },
 
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
