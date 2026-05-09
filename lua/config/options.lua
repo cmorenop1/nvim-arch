@@ -36,6 +36,8 @@ vim.g.minipairs_disable = true
 vim.o.autowriteall = true
 vim.g.autoformat = false
 vim.g.lazyvim_python_lsp = "basedpyright"
+vim.g.lazyvim_php_lsp = "intelephense"
+
 
 -- ── LARAVEL / BLADE SETUP ──────────────────────────────────
 vim.filetype.add({

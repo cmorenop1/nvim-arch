@@ -677,6 +677,7 @@ local MAPS = {
   { "n",               "<Tab>.",    Editor.edit_keymaps,                     { noremap = true, desc = "Edit keymaps file" } },
   { "n",               "<leader>m", "<Cmd>Mason<CR>",                        { noremap = true, silent = true } },
   { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                   { noremap = true, silent = true } },
+  { "n",               "<leader>H", "<Cmd>checkhealth<CR>",                   { noremap = true, silent = true } },
 
   -- ── TERMINAL ──────────────────────────────────────────────────────────────
   { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true } },
