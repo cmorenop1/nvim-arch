@@ -651,13 +651,26 @@ local MAPS = {
   end, { desc = "Heal healthbar" } },
 
   -- ── INSERT / EDIT ─────────────────────────────────────────────────────────
-  { "n",               "o",         "o<Esc>zz",                              { noremap = true, silent = true } },
-  { "n",               "O",         "O<Esc>zz",                              { noremap = true, silent = true } },
-  { "n",               "<S-a>",     "a",                                     { noremap = true, silent = true } },
+  { "n", "o",         "o<Esc>zz",                { noremap = true, silent = true } },
+  { "n", "O",         "O<Esc>zz",                { noremap = true, silent = true } },
+  { "n", "<S-a>",     "a",                       { noremap = true, silent = true } },
 
   -- ── REPLACE / PATHS ──────────────────────────────────────────────────────
-  { "n",               "<leader>r", Editor.replace_word,                     { desc = "Replace word" } },
-  { "n",               "<leader>p", Editor.copy_python_import,               { noremap = true, silent = true } },
+  { "n", "<leader>r", Editor.replace_word,       { desc = "Replace word" } },
+  { "n", "<leader>p", Editor.copy_python_import, { noremap = true, silent = true } },
+  -- { "n", "<Tab>a",    "A;<Esc>",                 { silent = true, desc = "[;] Add semicolon" } },
+  {
+    "n",
+    "<Tab>a",
+    function()
+      local cursor = vim.api.nvim_win_get_cursor(0)
+      vim.cmd("normal! A;<Esc>")
+      vim.api.nvim_win_set_cursor(0, cursor)
+      vim.notify("Added semicolon!!", vim.log.levels.INFO, { title = "Editor" })
+    end,
+    { silent = true, desc = "[;] Add semicolon" }
+  },
+
 
   -- ── CONFIG ────────────────────────────────────────────────────────────────
   { "n",               "<F5>",      Config.reload,                           { desc = "Reload keymaps" } },
@@ -679,25 +692,7 @@ local MAPS = {
 -- ─────────────────────────────────────────────────────────────────────────────
 -- § 5  PARAMETRIC MAP GROUPS  (loops that generate multiple mappings)
 -- ─────────────────────────────────────────────────────────────────────────────
----@param char string
-local function _make_append_handler(char)
-  return function()
-    api.nvim_feedkeys(
-      api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false
-    )
-    for lnum = fn.line("'<"), fn.line("'>") do
-      fn.setline(lnum, fn.getline(lnum) .. char)
-    end
-  end
-end
-
 local function _register_parametric_maps()
-  for _, char in ipairs({ ",", ";", ":", "=" }) do
-    map("v", "<Tab>a" .. char,
-      _make_append_handler(char),
-      { noremap = true, silent = true, desc = "Append [" .. char .. "] to block" })
-  end
-
   local delimiters = {
     ["{"] = "}",
     ["("] = ")",
