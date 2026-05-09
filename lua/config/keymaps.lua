@@ -664,7 +664,7 @@ local MAPS = {
     "<Tab>a",
     function()
       local cursor = vim.api.nvim_win_get_cursor(0)
-      vim.cmd("normal! A;<Esc>")
+      vim.cmd("normal! A;")
       vim.api.nvim_win_set_cursor(0, cursor)
       vim.notify("Added semicolon!!", vim.log.levels.INFO, { title = "Editor" })
     end,
