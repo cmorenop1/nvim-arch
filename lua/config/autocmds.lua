@@ -17,3 +17,11 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     require("mini.map").open()
   end,
 })
+
+vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
+  callback = function()
+    if vim.bo.filetype ~= "harpoon" then
+      vim.cmd("silent! wa")
+    end
+  end,
+})
