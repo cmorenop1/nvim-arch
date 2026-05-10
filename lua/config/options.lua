@@ -45,3 +45,4 @@ vim.filetype.add({
     [".*%.blade%.php"] = "blade",
   },
 })
+vim.treesitter.language.register("html", "blade")
