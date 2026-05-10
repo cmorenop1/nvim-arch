@@ -148,9 +148,26 @@ function LSP.format_file(delay_ms)
   vim.defer_fn(function()
     local cursor = api.nvim_win_get_cursor(0)
     lsp.format({ async = false })
+    -- Auto-indent the entire file (GGVG=)
+    vim.cmd("silent! normal! ggVG=")
+    -- Restore original cursor position
     api.nvim_win_set_cursor(0, cursor)
   end, delay_ms or 500)
 end
+
+-- function LSP.format_file(delay_ms)
+--   vim.cmd("e!")
+--   notify("Format!!", vim.log.levels.INFO)
+--   lsp.code_action({
+--     context = { only = { "source.organizeImports" } },
+--     apply   = true,
+--   })
+--   vim.defer_fn(function()
+--     local cursor = api.nvim_win_get_cursor(0)
+--     lsp.format({ async = false })
+--     api.nvim_win_set_cursor(0, cursor)
+--   end, delay_ms or 500)
+-- end
 
 --- Open LSP code-actions then run a full format pass.
 
