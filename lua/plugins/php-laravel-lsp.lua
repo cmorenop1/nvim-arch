@@ -82,7 +82,7 @@ return {
   -- MASON - Package manager
   -- ══════════════════════════════════════════════════════════
   {
-    "williamboman/mason.nvim", -- Fixed the repo name (it's williamboman, not mason-org)
+    "mason-org/mason.nvim", -- Fixed the repo name (it's williamboman, not mason-org)
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}
       vim.list_extend(opts.ensure_installed, {
