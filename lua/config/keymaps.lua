@@ -141,10 +141,10 @@ local LSP = {}
 function LSP.format_file(delay_ms)
   vim.cmd("e!")
   notify("Format!!", vim.log.levels.INFO)
-  lsp.code_action({
-    context = { only = { "source.organizeImports" } },
-    apply   = true,
-  })
+  -- lsp.code_action({
+  --   context = { only = { "source.organizeImports" } },
+  --   apply   = true,
+  -- })
   vim.defer_fn(function()
     local cursor = api.nvim_win_get_cursor(0)
     lsp.format({ async = false })
@@ -174,7 +174,7 @@ end
 
 function LSP.actions_and_format()
   vim.cmd("e!")
-  lsp.code_action()
+  -- lsp.code_action()
   LSP.format_file()
   notify("Organise!!", vim.log.levels.INFO)
 end
@@ -695,7 +695,7 @@ local MAPS = {
   { "n",               "<Tab>.",    Editor.edit_keymaps,                     { noremap = true, desc = "Edit keymaps file" } },
   { "n",               "<leader>m", "<Cmd>Mason<CR>",                        { noremap = true, silent = true } },
   { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                   { noremap = true, silent = true } },
-  { "n",               "<leader>H", "<Cmd>checkhealth<CR>",                   { noremap = true, silent = true } },
+  { "n",               "<leader>H", "<Cmd>checkhealth<CR>",                  { noremap = true, silent = true } },
 
   -- ── TERMINAL ──────────────────────────────────────────────────────────────
   { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true } },
