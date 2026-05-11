@@ -141,36 +141,24 @@ local LSP = {}
 function LSP.format_file(delay_ms)
   vim.cmd("e!")
   notify("Format!!", vim.log.levels.INFO)
-  -- lsp.code_action({
-  --   context = { only = { "source.organizeImports" } },
-  --   apply   = true,
-  -- })
+  lsp.code_action({
+    context = { only = { "source.organizeImports" } },
+    apply   = true,
+  })
   vim.defer_fn(function()
     local cursor = api.nvim_win_get_cursor(0)
     lsp.format({ async = false })
-    -- Auto-indent the entire file (GGVG=)
     vim.cmd("silent! normal! ggVG=")
-    -- Restore original cursor position
     api.nvim_win_set_cursor(0, cursor)
     vim.cmd("silent! normal! zz")
   end, delay_ms or 500)
 end
 
--- function LSP.format_file(delay_ms)
---   vim.cmd("e!")
---   notify("Format!!", vim.log.levels.INFO)
---   lsp.code_action({
---     context = { only = { "source.organizeImports" } },
---     apply   = true,
---   })
---   vim.defer_fn(function()
---     local cursor = api.nvim_win_get_cursor(0)
---     lsp.format({ async = false })
---     api.nvim_win_set_cursor(0, cursor)
---   end, delay_ms or 500)
--- end
-
---- Open LSP code-actions then run a full format pass.
+function LSP.available_action()
+  vim.cmd("e!")
+  lsp.code_action()
+  notify("LSP Actions!!", vim.log.levels.INFO)
+end
 
 function LSP.actions_and_format()
   vim.cmd("e!")
@@ -657,12 +645,24 @@ local MAPS = {
 
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
-  { "n",               "<Tab>k",           LSP.actions_and_format,         { noremap = true, silent = true, desc = "LSP actions + format" } },
-  { "n",               "<Tab>g",           LSP.go_to_definition,           { noremap = true, silent = true, desc = "LSP Definition" } },
+  { "n", "<Tab>k", function()
+    vim.lsp.buf.code_action({
+      filter = function(action)
+        -- return true
+        return action.kind and (
+          action.kind:match("^source%.organizeImports") or
+          action.kind:match("^source%.addMissingImports") or
+          action.title:match("[Ii]mport")
+        )
+      end,
+      apply = false, -- Auto-apply if only one match
+    })
+  end, { desc = "Auto import" } },
+  { "n", "<Tab>g",  LSP.go_to_definition,   { noremap = true, silent = true, desc = "LSP Definition" } },
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
-  { "n",               "<Tab>ho",          ":Healthbar open<CR>",          { noremap = true, silent = true, desc = "Open healthbar" } },
-  { "n",               "<Tab>hc",          ":Healthbar close<CR>",         { noremap = true, silent = true, desc = "Close healthbar" } },
+  { "n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc = "Open healthbar" } },
+  { "n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc = "Close healthbar" } },
   { "n", "<Tab>hh", function()
     notify("HEAL!!")
     vim.cmd("Healthbar reset")
