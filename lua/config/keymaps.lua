@@ -691,21 +691,22 @@ local MAPS = {
 
 
   -- ── CONFIG ────────────────────────────────────────────────────────────────
-  { "n",               "<F5>",      Config.reload,                           { desc = "Reload keymaps" } },
-  { "n",               "<Tab>.",    Editor.edit_keymaps,                     { noremap = true, desc = "Edit keymaps file" } },
-  { "n",               "<leader>m", "<Cmd>Mason<CR>",                        { noremap = true, silent = true } },
-  { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                   { noremap = true, silent = true } },
+  { "n",               "<F5>",      Config.reload,                                    { desc = "Reload keymaps" } },
+  { "n",               "<Tab>.",    Editor.edit_keymaps,                              { noremap = true, desc = "Edit keymaps file" } },
+  { "n",               "<leader>m", "<Cmd>Mason<CR>",                                 { noremap = true, silent = true } },
+  { "n",               "<leader>M", "<Cmd>LazyExtras<CR>",                            { noremap = true, silent = true } },
   -- { "n",               "<leader>H", "<Cmd>checkhealth<CR>",                  { noremap = true, silent = true } },
 
   -- ── TERMINAL ──────────────────────────────────────────────────────────────
-  { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>", { noremap = true, silent = true } },
+  { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>",          { noremap = true, silent = true } },
+  { "t",               "<Tab>n",    [[<C-\><C-n><Cmd>setlocal relativenumber!<CR>i]], { noremap = true, silent = true } },
 
 
   -- ── LLM TOOL ─────────────────────────────────────────────────────────────
-  { "v",               "<Tab>m",    LLM.run,                                 { silent = true, desc = "LLM tool" } },
+  { "v",               "<Tab>m",    LLM.run,                                          { silent = true, desc = "LLM tool" } },
 
   -- ── DEBUG ─────────────────────────────────────────────────────────────────
-  { { "n", "i" },      "<F1>",      Editor.insert_python_print,              {} },
+  { { "n", "i" },      "<F1>",      Editor.insert_python_print,                       {} },
 }
 
 -- ─────────────────────────────────────────────────────────────────────────────
