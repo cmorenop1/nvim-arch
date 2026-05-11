@@ -699,7 +699,7 @@ local MAPS = {
 
   -- ── TERMINAL ──────────────────────────────────────────────────────────────
   { { "n", "i", "t" }, "<F6>",      "<Cmd>terminal<CR><Cmd>startinsert<CR>",          { noremap = true, silent = true } },
-  { "t",               "<Tab>n",    [[<C-\><C-n><Cmd>setlocal relativenumber!<CR>i]], { noremap = true, silent = true } },
+  { { "t", "n" },      "<Tab>n",    [[<C-\><C-n><Cmd>setlocal relativenumber!<CR>i]], { noremap = true, silent = true } },
 
 
   -- ── LLM TOOL ─────────────────────────────────────────────────────────────
