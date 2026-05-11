@@ -151,7 +151,7 @@ function LSP.format_file(delay_ms)
     vim.cmd("silent! normal! ggVG=")
     api.nvim_win_set_cursor(0, cursor)
     vim.cmd("silent! normal! zz")
-  end, delay_ms or 500)
+  end, delay_ms or 250)
 end
 
 function LSP.available_action()
