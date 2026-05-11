@@ -50,29 +50,20 @@ return {
               harpoon_delete = function(picker, item)
                 local to_remove = item or picker:selected()
                 if to_remove then
-                  -- Use harpoon's native list removal if possible,
-                  -- or ensure the table is cleared correctly.
                   table.remove(harpoon:list().items, to_remove.idx)
                   picker:find({ refresh = true })
                 end
               end,
             },
           })
+
+          vim.defer_fn(function()
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+          end, 10)
         end,
         desc = "Harpoon Picker (Snacks)",
       },
     }
-
-    -- for i = 1, 9 do
-    --   table.insert(keys, {
-    --     "<leader>" .. i,
-    --     function()
-    --       require("harpoon"):list():select(i)
-    --     end,
-    --     desc = "Harpoon to File " .. i,
-    --   })
-    -- end
-
     return keys
   end,
 }
