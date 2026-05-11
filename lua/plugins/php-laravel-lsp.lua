@@ -1,20 +1,17 @@
 return {
-  -- ══════════════════════════════════════════════════════════
-  -- TREESITTER - Syntax highlighting & parsing
-  -- ══════════════════════════════════════════════════════════
   {
     "nvim-treesitter/nvim-treesitter",
     opts = function(_, opts)
-      -- Ensure list exists
       opts.ensure_installed = opts.ensure_installed or {}
-
-      -- Add your specific parsers
       vim.list_extend(opts.ensure_installed, {
         "blade",
         "php",
+        "php_only",
         "html",
         "javascript",
         "css",
+        "json",
+        "sql",
       })
 
       -- Register the blade filetype pattern here or in a separate file
@@ -46,6 +43,13 @@ return {
                 maxSize = 5000000,
                 associations = { "*.php", "*.blade.php" },
               },
+              exclude = {
+                "**/.git/**",
+                "**/node_modules/**",
+                "**/vendor/**/tests/**",
+                "**/vendor/**/test/**",
+                "**/vendor/bin/**",
+              },
               telemetry = { enabled = false },
               completion = {
                 insertUseDeclaration = true,
@@ -65,10 +69,16 @@ return {
     "stevearc/conform.nvim",
     opts = {
       formatters_by_ft = {
-        php = { "php_cs_fixer" },
+        -- php = { "php_cs_fixer" },
+        php = { "pint" },
         blade = { "blade-formatter" },
       },
       formatters = {
+        pint = {
+          command = "pint",
+          args = { "$FILENAME" },
+          stdin = false,
+        },
         ["blade-formatter"] = {
           command = "blade-formatter",
           args = { "--write", "$FILENAME" },
@@ -87,8 +97,11 @@ return {
       opts.ensure_installed = opts.ensure_installed or {}
       vim.list_extend(opts.ensure_installed, {
         "intelephense",
+        "html-lsp",
         "php-cs-fixer",
         "blade-formatter",
+        "phpcs",
+        "phpstan",
       })
     end,
   },
