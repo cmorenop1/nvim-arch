@@ -12,7 +12,7 @@ return {
           local filename = vim.fn.expand("%:t")
           vim.api.nvim_echo({
             { "[Harpoon] Added ", "None" },
-            { filename,   "Title" },
+            { filename,           "Title" },
           }, false, {})
         end,
         desc = "Harpoon File",
@@ -32,7 +32,6 @@ return {
             end
             return file_paths
           end
-
           Snacks.picker({
             finder = generate_harpoon_picker,
             win = {
@@ -64,15 +63,15 @@ return {
       },
     }
 
-    for i = 1, 9 do
-      table.insert(keys, {
-        "<leader>" .. i,
-        function()
-          require("harpoon"):list():select(i)
-        end,
-        desc = "Harpoon to File " .. i,
-      })
-    end
+    -- for i = 1, 9 do
+    --   table.insert(keys, {
+    --     "<leader>" .. i,
+    --     function()
+    --       require("harpoon"):list():select(i)
+    --     end,
+    --     desc = "Harpoon to File " .. i,
+    --   })
+    -- end
 
     return keys
   end,
