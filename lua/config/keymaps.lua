@@ -680,7 +680,7 @@ local MAPS = {
   -- { "n", "<Tab>a",    "A;<Esc>",                 { silent = true, desc = "[;] Add semicolon" } },
   {
     "n",
-    "<Tab>a",
+    "<Tab>;",
     function()
       local cursor = vim.api.nvim_win_get_cursor(0)
       vim.cmd("normal! A;")
