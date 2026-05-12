@@ -368,6 +368,10 @@ function Editor.live_grep()
   require("telescope.builtin").live_grep({ cwd = U.project_root() })
 end
 
+function Editor.fuzzy_find()
+  require("telescope.builtin").current_buffer_fuzzy_find()
+end
+
 --- Replace the word under the cursor across the whole buffer.
 
 function Editor.replace_word()
@@ -590,8 +594,8 @@ local MAPS = {
 
   -- ── SEARCH / FILES ──────────────────────────────────────────────────────
   { "n",               "<leader><leader>", Editor.find_files,              { desc = "Find Files" } },
-  { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find with GREP" } },
-  { "n",               "<Tab>/",           Editor.live_grep,               { desc = "Find with GREP" } },
+  { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find in project" } },
+  { "n",               "<Tab>/",           Editor.fuzzy_find,              { desc = "Fuzzy Find" } },
 
   -- ── MARKS ───────────────────────────────────────────────────────────────
   { "n",               "<Tab>ml",          Marks.list,                     { desc = "List marks" } },
