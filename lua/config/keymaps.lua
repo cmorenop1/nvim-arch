@@ -648,19 +648,19 @@ local MAPS = {
 
   -- ── LSP / FORMAT ─────────────────────────────────────────────────────────
   { "n",               "<Tab>f",           LSP.format_file,                { noremap = true, silent = true, desc = "Format file" } },
-  { "n", "<Tab>k", function()
-    vim.cmd("e!")
-    vim.lsp.buf.code_action({
-      filter = function(action)
-        return action.kind and (
-          action.kind:match("^source%.organizeImports") or
-          action.kind:match("^source%.addMissingImports") or
-          action.title:match("[Ii]mport")
-        )
-      end,
-      apply = false,
-    })
-  end, { desc = "Auto import" } },
+  -- { "n", "<Tab>k", function()
+  --   vim.cmd("e!")
+  --   vim.lsp.buf.code_action({
+  --     filter = function(action)
+  --       return action.kind and (
+  --         action.kind:match("^source%.organizeImports") or
+  --         action.kind:match("^source%.addMissingImports") or
+  --         action.title:match("[Ii]mport")
+  --       )
+  --     end,
+  --     apply = false,
+  --   })
+  -- end, { desc = "Auto import" } },
   { "n", "<Tab>g",    LSP.go_to_definition,      { noremap = true, silent = true, desc = "LSP Definition" } },
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
