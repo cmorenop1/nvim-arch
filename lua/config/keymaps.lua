@@ -597,10 +597,6 @@ local MAPS = {
   { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find in project" } },
   { "n",               "<Tab>/",           Editor.fuzzy_find,              { desc = "Fuzzy Find" } },
 
-  -- ── MARKS ───────────────────────────────────────────────────────────────
-  -- { "n",               "<Tab>ml",          Marks.list,                     { desc = "List marks" } },
-  -- { "n",               "<Tab>ma",          Marks.add,                      { desc = "Add Global Mark" } },
-  -- { "n",               "<Tab>md",          Marks.delete,                   { desc = "Delete Mark UI" } },
 
   -- ── DELETE / YANK ────────────────────────────────────────────────────────
   { "n",               "D",                '"_ld$',                        { desc = "Delete until EOL" } },
