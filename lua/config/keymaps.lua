@@ -609,6 +609,7 @@ local MAPS = {
   { "n",               "<Tab>y",           "yiw",                          { noremap = true, silent = true, desc = "Yank word" } },
   { "n",               "<Tab>c",           '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
   { "n",               "C",                '"_ciw',                        { noremap = true, silent = true, desc = "Change word" } },
+  { "n",               "p",                '0p',                           { noremap = true, silent = true, desc = "Paste Relative" } },
   { { "n", "t" },      "<Tab>p",           '"_ciw<C-r>0<Esc>',             { noremap = true, silent = true, desc = "Paste inside word" } },
 
   -- ── BUFFERS ──────────────────────────────────────────────────────────────
