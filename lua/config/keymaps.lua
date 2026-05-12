@@ -591,6 +591,7 @@ local MAPS = {
   -- ── SEARCH / FILES ──────────────────────────────────────────────────────
   { "n",               "<leader><leader>", Editor.find_files,              { desc = "Find Files" } },
   { "n",               "<leader>fg",       Editor.live_grep,               { desc = "Find with GREP" } },
+  { "n",               "<Tab>/",           Editor.live_grep,               { desc = "Find with GREP" } },
 
   -- ── MARKS ───────────────────────────────────────────────────────────────
   { "n",               "<Tab>ml",          Marks.list,                     { desc = "List marks" } },
@@ -659,15 +660,15 @@ local MAPS = {
       apply = false,
     })
   end, { desc = "Auto import" } },
-  { "n", "<Tab>g",  LSP.go_to_definition,   { noremap = true, silent = true, desc = "LSP Definition" } },
+  { "n", "<Tab>g",    LSP.go_to_definition,      { noremap = true, silent = true, desc = "LSP Definition" } },
 
   -- ── HEALTH BAR ───────────────────────────────────────────────────────────
-  { "n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc = "Open healthbar" } },
-  { "n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc = "Close healthbar" } },
-  { "n", "<Tab>hh", function()
-    notify("HEAL!!")
-    vim.cmd("Healthbar reset")
-  end, { desc = "Heal healthbar" } },
+  -- { "n", "<Tab>ho", ":Healthbar open<CR>",  { noremap = true, silent = true, desc = "Open healthbar" } },
+  -- { "n", "<Tab>hc", ":Healthbar close<CR>", { noremap = true, silent = true, desc = "Close healthbar" } },
+  -- { "n", "<Tab>hh", function()
+  --   notify("HEAL!!")
+  --   vim.cmd("Healthbar reset")
+  -- end, { desc = "Heal healthbar" } },
 
   -- ── INSERT / EDIT ─────────────────────────────────────────────────────────
   { "n", "o",         "o<Esc>zz",                { noremap = true, silent = true } },
